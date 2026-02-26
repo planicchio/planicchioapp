@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User } from 'lucide-react';
 import { useApp, COURSES } from '@/contexts/AppContext';
+import { useTranslation } from '@/i18n/translations';
 import BottomNav from './BottomNav';
 import CatPet from './CatPet';
 import HomeTab from './HomeTab';
@@ -19,14 +20,14 @@ const tabComponents: Record<string, React.FC> = {
 };
 
 const MainApp = () => {
-  const { activeTab, course } = useApp();
+  const { activeTab, course, nativeLang } = useApp();
+  const tr = useTranslation(nativeLang);
   const [profileOpen, setProfileOpen] = useState(false);
   const TabContent = tabComponents[activeTab] || HomeTab;
   const courseName = COURSES.find(c => c.id === course)?.flag || '🌍';
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🐱</span>
@@ -41,7 +42,6 @@ const MainApp = () => {
         </button>
       </header>
 
-      {/* Content */}
       <main className="px-4 pt-4 max-w-lg mx-auto">
         <TabContent />
       </main>

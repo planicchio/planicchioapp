@@ -1,4 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from '@/i18n/translations';
+import LanguageSelect from '@/components/LanguageSelect';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import CourseSelection from '@/components/CourseSelection';
 import LevelQuiz from '@/components/LevelQuiz';
@@ -8,11 +10,11 @@ const Index = () => {
   const { stage } = useApp();
 
   switch (stage) {
-    case 'welcome': return <WelcomeScreen />;
+    case 'welcome': return <LanguageSelect />;
     case 'course': return <CourseSelection />;
     case 'quiz': return <LevelQuiz />;
     case 'app': return <MainApp />;
-    default: return <WelcomeScreen />;
+    default: return <LanguageSelect />;
   }
 };
 

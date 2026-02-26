@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { NativeLang } from '@/i18n/translations';
 
 export const PETS = [
   { id: 'cat', emoji: '🐱', name: 'Gato' },
@@ -18,20 +19,20 @@ export const COURSES = [
 ];
 
 export const TITLES = [
-  { minXp: 0, title: 'Iniciante', emoji: '🌱' },
-  { minXp: 100, title: 'Viajante', emoji: '✈️' },
-  { minXp: 300, title: 'Explorador', emoji: '🧭' },
-  { minXp: 600, title: 'Aventureiro', emoji: '⛰️' },
-  { minXp: 1000, title: 'Mestre', emoji: '🎓' },
-  { minXp: 2000, title: 'Lenda', emoji: '👑' },
+  { minXp: 0, titleKey: 'title_beginner', emoji: '🌱' },
+  { minXp: 100, titleKey: 'title_traveler', emoji: '✈️' },
+  { minXp: 300, titleKey: 'title_explorer', emoji: '🧭' },
+  { minXp: 600, titleKey: 'title_adventurer', emoji: '⛰️' },
+  { minXp: 1000, titleKey: 'title_master', emoji: '🎓' },
+  { minXp: 2000, titleKey: 'title_legend', emoji: '👑' },
 ];
 
-export type Stage = 'welcome' | 'course' | 'quiz' | 'app';
+export type Stage = 'welcome' | 'language' | 'course' | 'quiz' | 'app';
 export type TabId = 'home' | 'curiosities' | 'dictionary' | 'community' | 'exercises';
 
 interface Mission {
   id: number;
-  text: string;
+  textKey: string;
   target: number;
   progress: number;
   xpReward: number;
@@ -40,6 +41,7 @@ interface Mission {
 
 interface AppState {
   stage: Stage;
+  nativeLang: NativeLang;
   course: string;
   level: string;
   xp: number;
@@ -58,6 +60,7 @@ interface AppState {
 
 interface AppContextType extends AppState {
   setStage: (s: Stage) => void;
+  setNativeLang: (l: NativeLang) => void;
   setCourse: (c: string) => void;
   setLevel: (l: string) => void;
   addXp: (n: number) => void;
@@ -69,19 +72,19 @@ interface AppContextType extends AppState {
   setPetMood: (m: 'idle' | 'happy' | 'sad' | 'dancing') => void;
   completeExercise: (correct: boolean) => void;
   resetProgress: () => void;
-  getTitle: () => { title: string; emoji: string; nextXp: number; progress: number };
+  getTitle: () => { titleKey: string; emoji: string; nextXp: number; progress: number };
   getPetEmoji: () => string;
 }
 
 const defaultMissions: { daily: Mission[]; weekly: Mission[] } = {
   daily: [
-    { id: 1, text: 'Complete 3 exercícios', target: 3, progress: 0, xpReward: 20, done: false },
-    { id: 2, text: 'Acerte 5 em sequência', target: 5, progress: 0, xpReward: 30, done: false },
-    { id: 3, text: 'Visite as curiosidades', target: 1, progress: 0, xpReward: 10, done: false },
+    { id: 1, textKey: 'mission_3exercises', target: 3, progress: 0, xpReward: 20, done: false },
+    { id: 2, textKey: 'mission_5streak', target: 5, progress: 0, xpReward: 30, done: false },
+    { id: 3, textKey: 'mission_curiosities', target: 1, progress: 0, xpReward: 10, done: false },
   ],
   weekly: [
-    { id: 1, text: 'Complete 20 exercícios', target: 20, progress: 0, xpReward: 100, done: false },
-    { id: 2, text: 'Mantenha streak de 3 dias', target: 3, progress: 0, xpReward: 150, done: false },
+    { id: 1, textKey: 'mission_20exercises', target: 20, progress: 0, xpReward: 100, done: false },
+    { id: 2, textKey: 'mission_3daystreak', target: 3, progress: 0, xpReward: 150, done: false },
   ],
 };
 
@@ -89,6 +92,7 @@ const STORAGE_KEY = 'linguacat_state';
 
 const defaultState: AppState = {
   stage: 'welcome',
+  nativeLang: 'pt',
   course: '',
   level: 'A1',
   xp: 0,
@@ -196,7 +200,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const range = next.minXp - current.minXp || 1;
     const progress = Math.min(((state.xp - current.minXp) / range) * 100, 100);
-    return { ...current, nextXp: next.minXp, progress };
+    return { titleKey: current.titleKey, emoji: current.emoji, nextXp: next.minXp, progress };
   }, [state.xp]);
 
   const getPetEmoji = useCallback(() => {
@@ -206,6 +210,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const value: AppContextType = {
     ...state,
     setStage: (s) => update({ stage: s }),
+    setNativeLang: (l) => update({ nativeLang: l }),
     setCourse: (c) => update({ course: c }),
     setLevel: (l) => update({ level: l }),
     addXp: (n) => update({ xp: state.xp + n }),

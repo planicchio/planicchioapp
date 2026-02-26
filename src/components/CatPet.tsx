@@ -1,24 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
-
-const phrases = [
-  "Miau! Vamos estudar! 📚",
-  "Você tá arrasando! 🌟",
-  "Continue assim! 💪",
-  "Sou o gato mais inteligente! 🧠",
-  "Hora de aprender! 🎓",
-  "Ronron... orgulhoso de você! 😸",
-  "Vamos dominar esse idioma! 🌍",
-  "Mais um exercício, vamos! 🚀",
-  "Miau miau! Você é demais! 🎉",
-  "Preciso de carinho... e estudo! 😻",
-];
+import { useTranslation } from '@/i18n/translations';
 
 const CatPet = () => {
-  const { petMood, setPetMood, getPetEmoji } = useApp();
+  const { petMood, setPetMood, getPetEmoji, nativeLang } = useApp();
+  const tr = useTranslation(nativeLang);
   const [showPhrase, setShowPhrase] = useState(false);
   const [phrase, setPhrase] = useState('');
   const [animClass, setAnimClass] = useState('cat-idle');
+
+  const phrases = [
+    tr('cat_phrase_1'), tr('cat_phrase_2'), tr('cat_phrase_3'), tr('cat_phrase_4'),
+    tr('cat_phrase_5'), tr('cat_phrase_6'), tr('cat_phrase_7'), tr('cat_phrase_8'),
+  ];
 
   useEffect(() => {
     switch (petMood) {

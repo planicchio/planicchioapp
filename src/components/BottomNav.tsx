@@ -1,21 +1,23 @@
 import { Home, Lightbulb, BookOpen, Users, PenTool, type LucideIcon } from 'lucide-react';
 import { useApp, type TabId } from '@/contexts/AppContext';
+import { useTranslation } from '@/i18n/translations';
 
-const tabs: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'curiosities', label: 'Dicas', icon: Lightbulb },
-  { id: 'dictionary', label: 'Dicionário', icon: BookOpen },
-  { id: 'community', label: 'Social', icon: Users },
-  { id: 'exercises', label: 'Exercícios', icon: PenTool },
+const tabKeys: { id: TabId; labelKey: string; icon: LucideIcon }[] = [
+  { id: 'home', labelKey: 'tab_home', icon: Home },
+  { id: 'curiosities', labelKey: 'tab_tips', icon: Lightbulb },
+  { id: 'dictionary', labelKey: 'tab_dictionary', icon: BookOpen },
+  { id: 'community', labelKey: 'tab_social', icon: Users },
+  { id: 'exercises', labelKey: 'tab_exercises', icon: PenTool },
 ];
 
 const BottomNav = () => {
-  const { activeTab, setActiveTab } = useApp();
+  const { activeTab, setActiveTab, nativeLang } = useApp();
+  const tr = useTranslation(nativeLang);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 safe-area-bottom">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
-        {tabs.map(({ id, label, icon: Icon }) => {
+        {tabKeys.map(({ id, labelKey, icon: Icon }) => {
           const active = activeTab === id;
           return (
             <button
@@ -26,7 +28,7 @@ const BottomNav = () => {
               }`}
             >
               <Icon size={22} className={active ? 'drop-shadow-sm' : ''} />
-              <span className={`text-[10px] font-bold ${active ? '' : 'font-semibold'}`}>{label}</span>
+              <span className={`text-[10px] font-bold ${active ? '' : 'font-semibold'}`}>{tr(labelKey)}</span>
               {active && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
             </button>
           );

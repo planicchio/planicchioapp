@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { useApp, COURSES } from '@/contexts/AppContext';
+import { useTranslation } from '@/i18n/translations';
 
 const CourseSelection = () => {
-  const { setCourse, setStage } = useApp();
+  const { setCourse, setStage, nativeLang } = useApp();
+  const tr = useTranslation(nativeLang);
 
   const handleSelect = (id: string) => {
     setCourse(id);
@@ -13,8 +15,8 @@ const CourseSelection = () => {
     <div className="min-h-screen bg-background p-6 flex flex-col">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8 mt-8">
         <span className="text-5xl mb-3 block">🌍</span>
-        <h1 className="text-3xl font-black text-foreground">Qual idioma?</h1>
-        <p className="text-muted-foreground mt-1">Escolha o idioma que quer aprender</p>
+        <h1 className="text-3xl font-black text-foreground">{tr('choose_course')}</h1>
+        <p className="text-muted-foreground mt-1">{tr('choose_course_desc')}</p>
       </motion.div>
 
       <div className="grid grid-cols-2 gap-4 max-w-md mx-auto w-full flex-1">

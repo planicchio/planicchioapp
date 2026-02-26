@@ -30,7 +30,7 @@ const MainApp = () => {
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🐱</span>
-          <h1 className="text-xl font-black text-primary">LinguaCat</h1>
+          <h1 className="text-xl font-black text-primary">Planicchio</h1>
           <span className="text-lg">{courseName}</span>
         </div>
         <button

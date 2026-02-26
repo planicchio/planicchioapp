@@ -9,12 +9,12 @@ export const PETS = [
 ];
 
 export const COURSES = [
-  { id: 'en', name: 'Inglês', flag: '🇺🇸', emoji: '🗽' },
-  { id: 'es', name: 'Espanhol', flag: '🇪🇸', emoji: '💃' },
-  { id: 'fr', name: 'Francês', flag: '🇫🇷', emoji: '🗼' },
-  { id: 'de', name: 'Alemão', flag: '🇩🇪', emoji: '🏰' },
+  { id: 'en', name: 'English', flag: '🇺🇸', emoji: '🗽' },
+  { id: 'es', name: 'Español', flag: '🇪🇸', emoji: '💃' },
+  { id: 'fr', name: 'Français', flag: '🇫🇷', emoji: '🗼' },
+  { id: 'de', name: 'Deutsch', flag: '🇩🇪', emoji: '🏰' },
   { id: 'it', name: 'Italiano', flag: '🇮🇹', emoji: '🍕' },
-  { id: 'ja', name: 'Japonês', flag: '🇯🇵', emoji: '🗾' },
+  { id: 'ja', name: '日本語', flag: '🇯🇵', emoji: '🗾' },
 ];
 
 export const TITLES = [

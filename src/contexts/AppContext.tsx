@@ -88,7 +88,7 @@ const defaultMissions: { daily: Mission[]; weekly: Mission[] } = {
   ],
 };
 
-const STORAGE_KEY = 'linguacat_state';
+const STORAGE_KEY = 'planicchio_state';
 
 const defaultState: AppState = {
   stage: 'welcome',

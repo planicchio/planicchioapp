@@ -308,7 +308,14 @@ const LevelQuiz = () => {
   const { course, nativeLang, setLevel, setStage } = useApp();
   const tr = useTranslation(nativeLang);
   
-  const questions = quizData[nativeLang]?.[course] || quizData.pt?.[course] || quizData.pt.en;
+ const questions = quizData[nativeLang]?.[course] ?? [];
+  if (!questions.length) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>Content not available yet for this language pair.</p>
+    </div>
+  );
+}
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);

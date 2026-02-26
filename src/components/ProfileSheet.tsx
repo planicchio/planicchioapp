@@ -16,7 +16,7 @@ const ProfileSheet = ({ open, onClose }: Props) => {
   const [tempName, setTempName] = useState(name);
   const [showDiary, setShowDiary] = useState(false);
   const [showPets, setShowPets] = useState(false);
-  const [showCourse, setShowCourse] = useState(false);
+  
   const title = getTitle();
 
   if (!open) return null;
@@ -145,7 +145,7 @@ const ProfileSheet = ({ open, onClose }: Props) => {
 
             {/* Change course */}
             <button
-              onClick={() => setShowCourse(!showCourse)}
+              onClick={() => { setStage('course'); onClose(); }}
               className="w-full bg-card rounded-xl p-4 border border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -154,20 +154,6 @@ const ProfileSheet = ({ open, onClose }: Props) => {
               </div>
               <span className="text-sm text-muted-foreground">{COURSES.find(c => c.id === course)?.flag}</span>
             </button>
-            {showCourse && (
-              <div className="bg-card rounded-xl p-4 border border-border grid grid-cols-3 gap-2">
-                {COURSES.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => { setCourse(c.id); setShowCourse(false); }}
-                    className={`p-3 rounded-xl text-center transition-all ${course === c.id ? 'bg-primary/20' : 'hover:bg-muted'}`}
-                  >
-                    <span className="text-2xl block">{c.flag}</span>
-                    <span className="text-xs font-bold text-foreground">{c.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Backup */}
             <button className="w-full bg-card rounded-xl p-4 border border-border flex items-center justify-between hover:bg-muted/50 transition-colors">

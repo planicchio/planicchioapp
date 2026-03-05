@@ -9,6 +9,7 @@ const languages = [
   { id: 'de', name: 'Deutsch', flag: '🇩🇪', greeting: 'Welche Sprache sprichst du?' },
   { id: 'it', name: 'Italiano', flag: '🇮🇹', greeting: 'Che lingua parli?' },
   { id: 'ja', name: '日本語', flag: '🇯🇵', greeting: 'あなたの言語は何ですか？' },
+  { id: 'ko', name: '한국어', flag: '🇰🇷', greeting: '어떤 언어를 사용하시나요?' },
 ];
 
 const LanguageSelect = () => {

@@ -5,6 +5,7 @@ import { Flame, Trophy, Star, Gamepad2, Brain, Zap, Search, Ear } from 'lucide-r
 import MemoryGame from './MemoryGame';
 import QuickQuizGame from './QuickQuizGame';
 import WordHuntGame from './WordHuntGame';
+import ListenGame from './ListenGame';
 
 const HomeTab = () => {
   const { name, streak, xp, level, course, nativeLang, getTitle, dailyMissions, weeklyMissions, setActiveTab } = useApp();
@@ -23,6 +24,7 @@ const HomeTab = () => {
   if (activeMinigame === 'memory') return <MemoryGame onBack={() => setActiveMinigame(null)} />;
   if (activeMinigame === 'quiz') return <QuickQuizGame onBack={() => setActiveMinigame(null)} />;
   if (activeMinigame === 'words') return <WordHuntGame onBack={() => setActiveMinigame(null)} />;
+  if (activeMinigame === 'listen') return <ListenGame onBack={() => setActiveMinigame(null)} />;
 
   return (
     <div className="space-y-5 pb-4">
@@ -107,7 +109,7 @@ const HomeTab = () => {
           {minigames.map(g => (
             <button
               key={g.id}
-              onClick={() => g.id === 'listen' ? setActiveTab('exercises') : setActiveMinigame(g.id)}
+              onClick={() => setActiveMinigame(g.id)}
               className="bg-card rounded-2xl p-4 shadow-sm border border-border text-center hover:shadow-md transition-all hover:scale-[1.02] active:scale-95"
             >
               <span className="text-3xl block mb-1">{g.emoji}</span>

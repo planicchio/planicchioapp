@@ -1,28 +1,74 @@
 import { useState } from 'react';
-import { Send, Lock, MessageCircle } from 'lucide-react';
+import { Send, Lock, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+
+interface Comment {
+  id: number;
+  name: string;
+  text: string;
+  time: string;
+  likes: number;
+  replies: Comment[];
+}
 
 const CommunityTab = () => {
   const { name, nativeLang } = useApp();
   const tr = useTranslation(nativeLang);
 
-  const initialComments = [
-    { id: 1, name: 'Maria 🇧🇷', text: tr('share_something').replace('...', '?'), time: '2h', likes: 5 },
-    { id: 2, name: 'João 🇧🇷', text: '💡 Planicchio is great!', time: '4h', likes: 12 },
-    { id: 3, name: 'Ana 🇧🇷', text: '🎉🎉 B1!', time: '6h', likes: 20 },
-  ];
-
-  const [comments, setComments] = useState(initialComments);
+  const [comments, setComments] = useState<Comment[]>([
+    { id: 1, name: 'Maria 🇧🇷', text: tr('share_something').replace('...', '?'), time: '2h', likes: 5, replies: [
+      { id: 101, name: 'João 🇧🇷', text: '👋 Welcome!', time: '1h', likes: 2, replies: [] },
+    ]},
+    { id: 2, name: 'João 🇧🇷', text: '💡 Planicchio is great!', time: '4h', likes: 12, replies: [] },
+    { id: 3, name: 'Ana 🇧🇷', text: '🎉🎉 B1!', time: '6h', likes: 20, replies: [] },
+  ]);
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
 
   const handleSend = () => {
     if (!newComment.trim()) return;
     setComments([
-      { id: Date.now(), name: `${name} 🌍`, text: newComment, time: tr('now'), likes: 0 },
+      { id: Date.now(), name: `${name} 🌍`, text: newComment, time: tr('now'), likes: 0, replies: [] },
       ...comments,
     ]);
     setNewComment('');
+  };
+
+  const handleReply = (commentId: number) => {
+    if (!replyText.trim()) return;
+    setComments(comments.map(c => {
+      if (c.id === commentId) {
+        return { ...c, replies: [...c.replies, { id: Date.now(), name: `${name} 🌍`, text: replyText, time: tr('now'), likes: 0, replies: [] }] };
+      }
+      return c;
+    }));
+    setReplyText('');
+    setReplyingTo(null);
+    setExpandedReplies(prev => new Set(prev).add(commentId));
+  };
+
+  const handleLike = (commentId: number, isReply?: boolean, parentId?: number) => {
+    if (isReply && parentId) {
+      setComments(comments.map(c => {
+        if (c.id === parentId) {
+          return { ...c, replies: c.replies.map(r => r.id === commentId ? { ...r, likes: r.likes + 1 } : r) };
+        }
+        return c;
+      }));
+    } else {
+      setComments(comments.map(c => c.id === commentId ? { ...c, likes: c.likes + 1 } : c));
+    }
+  };
+
+  const toggleReplies = (id: number) => {
+    setExpandedReplies(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
   return (
@@ -55,13 +101,56 @@ const CommunityTab = () => {
             </div>
             <p className="text-sm text-foreground">{c.text}</p>
             <div className="flex items-center gap-3 mt-2">
-              <button className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+              <button onClick={() => handleLike(c.id)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
                 ❤️ {c.likes}
               </button>
-              <button className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+              <button
+                onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(''); }}
+                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
+              >
                 <MessageCircle size={12} /> {tr('reply')}
               </button>
+              {c.replies.length > 0 && (
+                <button onClick={() => toggleReplies(c.id)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+                  {expandedReplies.has(c.id) ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  {c.replies.length} {c.replies.length === 1 ? tr('reply') : tr('reply')}
+                </button>
+              )}
             </div>
+
+            {replyingTo === c.id && (
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleReply(c.id)}
+                  placeholder={`${tr('reply')}...`}
+                  className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
+                <button onClick={() => handleReply(c.id)} className="bg-primary text-primary-foreground rounded-lg px-3 hover:opacity-90 active:scale-95 transition-all">
+                  <Send size={14} />
+                </button>
+              </div>
+            )}
+
+            {expandedReplies.has(c.id) && c.replies.length > 0 && (
+              <div className="ml-4 mt-3 space-y-2 border-l-2 border-primary/20 pl-3">
+                {c.replies.map(r => (
+                  <div key={r.id} className="bg-muted/50 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs text-foreground">{r.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{r.time}</span>
+                    </div>
+                    <p className="text-xs text-foreground">{r.text}</p>
+                    <button onClick={() => handleLike(r.id, true, c.id)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 mt-1 transition-colors">
+                      ❤️ {r.likes}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -10,7 +10,7 @@ interface ListenQuestion {
   correct: number;
 }
 
-const listenData: Record<string, Record<string, ListenQuestion[]>> = {
+const listenData: Record<string, ListenQuestion[]> = {
   en: [
     { word: 'Hello', options: ['Olá', 'Tchau', 'Obrigado', 'Por favor'], correct: 0 },
     { word: 'Good morning', options: ['Bom dia', 'Boa noite', 'Boa tarde', 'Tchau'], correct: 0 },

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
 import { useApp, COURSES } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
@@ -11,16 +12,27 @@ const CourseSelection = () => {
     setStage('quiz');
   };
 
+  // Filter out the user's native language from course options
+  const availableCourses = COURSES.filter(c => c.id !== nativeLang);
+
   return (
     <div className="min-h-screen bg-background p-6 flex flex-col">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8 mt-8">
+      <button
+        onClick={() => setStage('welcome')}
+        className="self-start flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+      >
+        <ArrowLeft size={20} />
+        <span className="font-bold text-sm">{tr('back')}</span>
+      </button>
+
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
         <span className="text-5xl mb-3 block">🌍</span>
         <h1 className="text-3xl font-black text-foreground">{tr('choose_course')}</h1>
         <p className="text-muted-foreground mt-1">{tr('choose_course_desc')}</p>
       </motion.div>
 
       <div className="grid grid-cols-2 gap-4 max-w-md mx-auto w-full flex-1">
-        {COURSES.map((course, i) => (
+        {availableCourses.map((course, i) => (
           <motion.button
             key={course.id}
             initial={{ opacity: 0, y: 20 }}

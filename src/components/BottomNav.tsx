@@ -5,9 +5,9 @@ import { useTranslation } from '@/i18n/translations';
 const tabKeys: { id: TabId; labelKey: string; icon: LucideIcon }[] = [
   { id: 'home', labelKey: 'tab_home', icon: Home },
   { id: 'curiosities', labelKey: 'tab_tips', icon: Lightbulb },
+  { id: 'exercises', labelKey: 'tab_exercises', icon: PenTool },
   { id: 'dictionary', labelKey: 'tab_dictionary', icon: BookOpen },
   { id: 'community', labelKey: 'tab_social', icon: Users },
-  { id: 'exercises', labelKey: 'tab_exercises', icon: PenTool },
 ];
 
 const BottomNav = () => {

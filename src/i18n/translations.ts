@@ -1,7 +1,7 @@
 // Full translation system for all 6 native languages
 // Keys: pt (Portuguese), en (English), es (Spanish), fr (French), de (German), it (Italian), ja (Japanese)
 
-export type NativeLang = 'pt' | 'en' | 'es' | 'fr' | 'de' | 'it' | 'ja';
+export type NativeLang = 'pt' | 'en' | 'es' | 'fr' | 'de' | 'it' | 'ja' | 'ko';
 
 type Translations = Record<NativeLang, Record<string, string>>;
 

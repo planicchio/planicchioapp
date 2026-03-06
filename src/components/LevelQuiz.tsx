@@ -326,7 +326,10 @@ const LevelQuiz = () => {
   const tr = useTranslation(nativeLang);
   
  const rawQuestions = quizData[nativeLang]?.[course] ?? [];
-const questions = rawQuestions.map(q => shuffleQuestion(q));
+
+const [questions] = useState(() =>
+  rawQuestions.map(q => shuffleQuestion(q))
+);
   if (!questions.length) {
   return (
     <div className="min-h-screen flex items-center justify-center">

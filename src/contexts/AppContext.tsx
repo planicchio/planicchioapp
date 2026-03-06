@@ -147,10 +147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const update = useCallback((partial: Partial<AppState>) => {
     setState(prev => ({ ...prev, ...partial }));
   }, []);
-
-  const completeExercise = useCallback((correct: boolean) => {
-    setState(prev => {
-      const completeCuriosity = useCallback(() => {
+const completeCuriosity = useCallback(() => {
   setState(prev => {
     const newDaily = prev.dailyMissions.map(m => {
       if (m.id === 3 && !m.done) {
@@ -171,6 +168,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   });
 }, []);
+  const completeExercise = useCallback((correct: boolean) => {
+    setState(prev => {
+  
       const newStreak = correct ? prev.correctStreak + 1 : 0;
       const xpGain = correct ? 10 : 0;
       const newDaily = prev.dailyMissions.map(m => {

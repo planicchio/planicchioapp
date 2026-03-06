@@ -18,6 +18,11 @@ export const COURSES = [
   { id: 'ja', name: '日本語', flag: '🇯🇵', emoji: '🗾' },
   { id: 'pt', name: 'Português', flag: '🇧🇷', emoji: '⚽' },
   { id: 'ko', name: '한국어', flag: '🇰🇷', emoji: '🎎' },
+  {
+ id: "pt",
+ name: "Português",
+ flag: "🇧🇷"
+}
 ];
 
 export const TITLES = [

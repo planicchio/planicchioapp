@@ -16,9 +16,8 @@ export const COURSES = [
   { id: 'de', name: 'Deutsch', flag: '🇩🇪', emoji: '🏰' },
   { id: 'it', name: 'Italiano', flag: '🇮🇹', emoji: '🍕' },
   { id: 'ja', name: '日本語', flag: '🇯🇵', emoji: '🗾' },
-  { id: 'pt', name: 'Português', flag: '🇧🇷', emoji: '⚽' },
-  { id: 'ko', name: '한국어', flag: '🇰🇷', emoji: '🎎' },
-  { id: 'pt', name: 'Português', flag: '🇧🇷', emoji: '☕' }
+  { id: 'pt', name: 'Português', flag: '🇧🇷', emoji: '☕' },
+  { id: 'ko', name: '한국어', flag: '🇰🇷', emoji: '🎎' }
 ];
 
 export const TITLES = [
@@ -151,6 +150,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const completeExercise = useCallback((correct: boolean) => {
     setState(prev => {
+      const completeCuriosity = useCallback(() => {
+  setState(prev => {
+    const newDaily = prev.dailyMissions.map(m => {
+      if (m.id === 3 && !m.done) {
+        const p = m.progress + 1;
+        return { ...m, progress: p, done: p >= m.target };
+      }
+      return m;
+    });
+
+    const missionXp = newDaily
+      .filter((m, i) => m.done && !prev.dailyMissions[i].done)
+      .reduce((sum, m) => sum + m.xpReward, 0);
+
+    return {
+      ...prev,
+      xp: prev.xp + missionXp,
+      dailyMissions: newDaily
+    };
+  });
+}, []);
       const newStreak = correct ? prev.correctStreak + 1 : 0;
       const xpGain = correct ? 10 : 0;
       const newDaily = prev.dailyMissions.map(m => {
@@ -211,6 +231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [state.pet]);
 
   const value: AppContextType = {
+    completeCuriosity,
     ...state,
     setStage: (s) => update({ stage: s }),
     setNativeLang: (l) => update({ nativeLang: l }),

@@ -296,6 +296,23 @@ const quizData: Record<string, Record<string, Question[]>> = {
   },
 };
 
+function shuffleQuestion(question: Question): Question {
+  const options = [...question.options];
+  const correctAnswer = options[question.correct];
+
+  const shuffled = options
+    .map(o => ({ o, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ o }) => o);
+
+  const newCorrectIndex = shuffled.indexOf(correctAnswer);
+
+  return {
+    question: question.question,
+    options: shuffled,
+    correct: newCorrectIndex
+  };
+}
 const getLevel = (score: number): string => {
   if (score <= 1) return 'A1';
   if (score === 2) return 'A2';
@@ -308,7 +325,8 @@ const LevelQuiz = () => {
   const { course, nativeLang, setLevel, setStage } = useApp();
   const tr = useTranslation(nativeLang);
   
- const questions = quizData[nativeLang]?.[course] ?? [];
+ const rawQuestions = quizData[nativeLang]?.[course] ?? [];
+const questions = rawQuestions.map(q => shuffleQuestion(q));
   if (!questions.length) {
   return (
     <div className="min-h-screen flex items-center justify-center">

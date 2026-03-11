@@ -1331,6 +1331,18 @@ export const t: Translations = {
     no_words_yet: '아직 단어가 없습니다...',
     download_backup: '백업 다운로드',
     restore_backup: '백업 복원',
+    backup_error: '백업 복원 오류',
+    tab_pet: '펫',
+    cat_writing: '쓰기 & 말하기',
+    my_pet: '내 펫',
+    hunger: '배고픔', energy: '에너지', happiness: '행복',
+    feed: '먹이주기', play: '놀기', growth: '성장',
+    chat_with_pet: '펫과 대화', chat_pet_desc: 'AI로 펫과 대화! VIP 전용.',
+    write_what_you_see: '보이는 것을 쓰세요!', speak_what_you_see: '보이는 것을 말하세요!',
+    type_answer: '답을 입력하세요...', type_or_speak: '입력하거나 마이크를 누르세요...',
+    correct_answer: '정답', confirm: '확인', post: '게시',
+    community_desc: '다른 학습자들과 공유하고 소통하세요!',
+    no_exercises: '아직 연습이 없습니다.',
   },
 };
 

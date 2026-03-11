@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Send, Lock, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, Lock, MessageCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
@@ -12,21 +12,42 @@ interface Comment {
   replies: Comment[];
 }
 
+const COMMENTS_STORAGE_KEY = 'planicchio_community_comments';
+
+const defaultComments: Comment[] = [
+  { id: 1, name: 'Maria 🇧🇷', text: 'Alguém mais aprendendo inglês? 🙋‍♀️', time: '2h', likes: 5, replies: [
+    { id: 101, name: 'João 🇧🇷', text: '👋 Eu! Estou no nível A2!', time: '1h', likes: 2, replies: [] },
+    { id: 102, name: 'Ana 🇧🇷', text: 'Também! Vamos praticar juntos!', time: '45min', likes: 3, replies: [] },
+  ]},
+  { id: 2, name: 'João 🇧🇷', text: '💡 Planicchio é incrível! Aprendi 50 palavras essa semana!', time: '4h', likes: 12, replies: [] },
+  { id: 3, name: 'Ana 🇧🇷', text: '🎉🎉 Cheguei no nível B1! Muito feliz!', time: '6h', likes: 20, replies: [
+    { id: 301, name: 'Carlos 🇧🇷', text: 'Parabéns! 🎊', time: '5h', likes: 4, replies: [] },
+  ] },
+  { id: 4, name: 'Pedro 🇧🇷', text: 'Dica: assistam séries no idioma que estão aprendendo com legenda!', time: '8h', likes: 15, replies: [] },
+  { id: 5, name: 'Luna 🇪🇸', text: '¡Hola a todos! Estoy aprendiendo portugués 🇧🇷', time: '10h', likes: 8, replies: [] },
+];
+
 const CommunityTab = () => {
   const { name, nativeLang } = useApp();
   const tr = useTranslation(nativeLang);
 
-  const [comments, setComments] = useState<Comment[]>([
-    { id: 1, name: 'Maria 🇧🇷', text: tr('share_something').replace('...', '?'), time: '2h', likes: 5, replies: [
-      { id: 101, name: 'João 🇧🇷', text: '👋 Welcome!', time: '1h', likes: 2, replies: [] },
-    ]},
-    { id: 2, name: 'João 🇧🇷', text: '💡 Planicchio is great!', time: '4h', likes: 12, replies: [] },
-    { id: 3, name: 'Ana 🇧🇷', text: '🎉🎉 B1!', time: '6h', likes: 20, replies: [] },
-  ]);
+  const [comments, setComments] = useState<Comment[]>(() => {
+    try {
+      const saved = localStorage.getItem(COMMENTS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return defaultComments;
+  });
+
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
+  const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set([1, 3]));
+
+  // Persist comments
+  useEffect(() => {
+    localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+  }, [comments]);
 
   const handleSend = () => {
     if (!newComment.trim()) return;
@@ -76,22 +97,32 @@ const CommunityTab = () => {
       <div className="text-center mb-2">
         <span className="text-4xl">👥</span>
         <h2 className="text-2xl font-black text-foreground">{tr('community_title')}</h2>
+        <p className="text-xs text-muted-foreground">{tr('community_desc') || 'Compartilhe, responda e interaja com outros estudantes!'}</p>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          type="text"
+      {/* Post area */}
+      <div className="bg-card rounded-xl p-3 border border-border">
+        <textarea
           value={newComment}
           onChange={e => setNewComment(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder={tr('share_something')}
-          className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+          rows={2}
+          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground font-semibold focus:outline-none resize-none"
         />
-        <button onClick={handleSend} className="bg-primary text-primary-foreground rounded-xl px-4 hover:opacity-90 active:scale-95 transition-all">
-          <Send size={18} />
-        </button>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={handleSend}
+            disabled={!newComment.trim()}
+            className="bg-primary text-primary-foreground rounded-xl px-4 py-2 font-bold text-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-40"
+          >
+            <Send size={14} className="inline mr-1" />
+            {tr('post') || 'Publicar'}
+          </button>
+        </div>
       </div>
 
+      {/* Comments */}
       <div className="space-y-3">
         {comments.map(c => (
           <div key={c.id} className="bg-card rounded-xl p-4 border border-border">
@@ -99,10 +130,10 @@ const CommunityTab = () => {
               <span className="font-bold text-sm text-foreground">{c.name}</span>
               <span className="text-xs text-muted-foreground">{c.time}</span>
             </div>
-            <p className="text-sm text-foreground">{c.text}</p>
-            <div className="flex items-center gap-3 mt-2">
-              <button onClick={() => handleLike(c.id)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
-                ❤️ {c.likes}
+            <p className="text-sm text-foreground mb-2">{c.text}</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => handleLike(c.id)} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1 transition-colors">
+                <Heart size={12} className={c.likes > 0 ? 'fill-red-500 text-red-500' : ''} /> {c.likes}
               </button>
               <button
                 onClick={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText(''); }}
@@ -113,11 +144,12 @@ const CommunityTab = () => {
               {c.replies.length > 0 && (
                 <button onClick={() => toggleReplies(c.id)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
                   {expandedReplies.has(c.id) ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                  {c.replies.length} {c.replies.length === 1 ? tr('reply') : tr('reply')}
+                  {c.replies.length} {tr('reply')}
                 </button>
               )}
             </div>
 
+            {/* Reply input */}
             {replyingTo === c.id && (
               <div className="flex gap-2 mt-3">
                 <input
@@ -135,6 +167,7 @@ const CommunityTab = () => {
               </div>
             )}
 
+            {/* Replies */}
             {expandedReplies.has(c.id) && c.replies.length > 0 && (
               <div className="ml-4 mt-3 space-y-2 border-l-2 border-primary/20 pl-3">
                 {c.replies.map(r => (
@@ -144,8 +177,8 @@ const CommunityTab = () => {
                       <span className="text-[10px] text-muted-foreground">{r.time}</span>
                     </div>
                     <p className="text-xs text-foreground">{r.text}</p>
-                    <button onClick={() => handleLike(r.id, true, c.id)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 mt-1 transition-colors">
-                      ❤️ {r.likes}
+                    <button onClick={() => handleLike(r.id, true, c.id)} className="text-[10px] text-muted-foreground hover:text-red-500 flex items-center gap-1 mt-1 transition-colors">
+                      <Heart size={10} className={r.likes > 0 ? 'fill-red-500 text-red-500' : ''} /> {r.likes}
                     </button>
                   </div>
                 ))}
@@ -155,6 +188,7 @@ const CommunityTab = () => {
         ))}
       </div>
 
+      {/* VIP Features */}
       <div className="space-y-3">
         {[
           { title: tr('talk_natives'), desc: tr('talk_natives_desc') },
@@ -167,7 +201,14 @@ const CommunityTab = () => {
               <h4 className="font-bold text-sm text-foreground">{feature.title}</h4>
               <p className="text-xs text-muted-foreground">{feature.desc}</p>
             </div>
-            <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">VIP</span>
+            <a
+              href="https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full hover:bg-primary/20 transition-colors"
+            >
+              VIP
+            </a>
           </div>
         ))}
       </div>

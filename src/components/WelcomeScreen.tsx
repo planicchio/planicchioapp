@@ -2,18 +2,14 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
-const VIP_STRIPE_URL = ''; // Add your Stripe payment link here
+const VIP_STRIPE_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
 
 const WelcomeScreen = () => {
   const { setStage, nativeLang } = useApp();
   const tr = useTranslation(nativeLang);
 
   const handleVip = () => {
-    if (VIP_STRIPE_URL) {
-      window.open(VIP_STRIPE_URL, '_blank');
-    } else {
-      alert(tr('vip_soon'));
-    }
+    window.open(VIP_STRIPE_URL, '_blank');
   };
 
   return (

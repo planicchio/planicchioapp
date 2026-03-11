@@ -17,7 +17,7 @@ export const COURSES = [
   { id: 'it', name: 'Italiano', flag: '🇮🇹', emoji: '🍕' },
   { id: 'ja', name: '日本語', flag: '🇯🇵', emoji: '🗾' },
   { id: 'pt', name: 'Português', flag: '🇧🇷', emoji: '☕' },
-  { id: 'ko', name: '한국어', flag: '🇰🇷', emoji: '🎎' }
+  { id: 'ko', name: '한국어', flag: '🇰🇷', emoji: '🎎' },
 ];
 
 export const TITLES = [
@@ -30,7 +30,7 @@ export const TITLES = [
 ];
 
 export type Stage = 'welcome' | 'language' | 'course' | 'quiz' | 'app';
-export type TabId = 'home' | 'curiosities' | 'dictionary' | 'community' | 'exercises';
+export type TabId = 'home' | 'curiosities' | 'dictionary' | 'pet' | 'community' | 'exercises';
 
 interface Mission {
   id: number;
@@ -58,6 +58,11 @@ interface AppState {
   correctStreak: number;
   dailyMissions: Mission[];
   weeklyMissions: Mission[];
+  petHunger: number;
+  petEnergy: number;
+  petHappiness: number;
+  lastFed: string;
+  lastPlayed: string;
 }
 
 interface AppContextType extends AppState {
@@ -73,9 +78,13 @@ interface AppContextType extends AppState {
   setDiary: (d: string) => void;
   setPetMood: (m: 'idle' | 'happy' | 'sad' | 'dancing') => void;
   completeExercise: (correct: boolean) => void;
+  completeCuriosity: () => void;
+  feedPet: () => void;
+  playWithPet: () => void;
   resetProgress: () => void;
   getTitle: () => { titleKey: string; emoji: string; nextXp: number; progress: number };
   getPetEmoji: () => string;
+  getPetLevel: () => number;
 }
 
 const defaultMissions: { daily: Mission[]; weekly: Mission[] } = {
@@ -109,6 +118,11 @@ const defaultState: AppState = {
   correctStreak: 0,
   dailyMissions: defaultMissions.daily,
   weeklyMissions: defaultMissions.weekly,
+  petHunger: 100,
+  petEnergy: 100,
+  petHappiness: 100,
+  lastFed: new Date().toISOString(),
+  lastPlayed: new Date().toISOString(),
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -144,33 +158,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [state.darkMode]);
 
+  // Decay pet stats over time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setState(prev => {
+        const hoursSinceLastFed = (Date.now() - new Date(prev.lastFed).getTime()) / (1000 * 60 * 60);
+        const hoursSinceLastPlayed = (Date.now() - new Date(prev.lastPlayed).getTime()) / (1000 * 60 * 60);
+        return {
+          ...prev,
+          petHunger: Math.max(0, prev.petHunger - (hoursSinceLastFed > 2 ? 1 : 0)),
+          petEnergy: Math.max(0, prev.petEnergy - (hoursSinceLastPlayed > 2 ? 1 : 0)),
+          petHappiness: Math.max(0, Math.min(100, (prev.petHunger + prev.petEnergy) / 2)),
+        };
+      });
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const update = useCallback((partial: Partial<AppState>) => {
     setState(prev => ({ ...prev, ...partial }));
   }, []);
-const completeCuriosity = useCallback(() => {
-  setState(prev => {
-    const newDaily = prev.dailyMissions.map(m => {
-      if (m.id === 3 && !m.done) {
-        const p = m.progress + 1;
-        return { ...m, progress: p, done: p >= m.target };
-      }
-      return m;
+
+  const completeCuriosity = useCallback(() => {
+    setState(prev => {
+      const newDaily = prev.dailyMissions.map(m => {
+        if (m.id === 3 && !m.done) {
+          const p = m.progress + 1;
+          return { ...m, progress: p, done: p >= m.target };
+        }
+        return m;
+      });
+      const missionXp = newDaily
+        .filter((m, i) => m.done && !prev.dailyMissions[i].done)
+        .reduce((sum, m) => sum + m.xpReward, 0);
+      return {
+        ...prev,
+        xp: prev.xp + missionXp,
+        dailyMissions: newDaily,
+      };
     });
+  }, []);
 
-    const missionXp = newDaily
-      .filter((m, i) => m.done && !prev.dailyMissions[i].done)
-      .reduce((sum, m) => sum + m.xpReward, 0);
-
-    return {
-      ...prev,
-      xp: prev.xp + missionXp,
-      dailyMissions: newDaily
-    };
-  });
-}, []);
   const completeExercise = useCallback((correct: boolean) => {
     setState(prev => {
-  
       const newStreak = correct ? prev.correctStreak + 1 : 0;
       const xpGain = correct ? 10 : 0;
       const newDaily = prev.dailyMissions.map(m => {
@@ -211,6 +241,28 @@ const completeCuriosity = useCallback(() => {
     setTimeout(() => setState(prev => ({ ...prev, petMood: 'idle' })), 1200);
   }, []);
 
+  const feedPet = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      petHunger: Math.min(100, prev.petHunger + 30),
+      petHappiness: Math.min(100, prev.petHappiness + 10),
+      lastFed: new Date().toISOString(),
+      petMood: 'happy',
+    }));
+    setTimeout(() => setState(prev => ({ ...prev, petMood: 'idle' })), 1200);
+  }, []);
+
+  const playWithPet = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      petEnergy: Math.min(100, prev.petEnergy + 25),
+      petHappiness: Math.min(100, prev.petHappiness + 15),
+      lastPlayed: new Date().toISOString(),
+      petMood: 'dancing',
+    }));
+    setTimeout(() => setState(prev => ({ ...prev, petMood: 'idle' })), 1200);
+  }, []);
+
   const getTitle = useCallback(() => {
     let current = TITLES[0];
     let next = TITLES[1];
@@ -230,8 +282,12 @@ const completeCuriosity = useCallback(() => {
     return PETS.find(p => p.id === state.pet)?.emoji || '🐱';
   }, [state.pet]);
 
+  const getPetLevel = useCallback(() => {
+    // Pet level based on XP: every 200 XP = 1 level
+    return Math.floor(state.xp / 200) + 1;
+  }, [state.xp]);
+
   const value: AppContextType = {
-    completeCuriosity,
     ...state,
     setStage: (s) => update({ stage: s }),
     setNativeLang: (l) => update({ nativeLang: l }),
@@ -248,12 +304,16 @@ const completeCuriosity = useCallback(() => {
       if (m !== 'idle') setTimeout(() => update({ petMood: 'idle' }), 1200);
     },
     completeExercise,
+    completeCuriosity,
+    feedPet,
+    playWithPet,
     resetProgress: () => {
       localStorage.removeItem(STORAGE_KEY);
       setState(defaultState);
     },
     getTitle,
     getPetEmoji,
+    getPetLevel,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

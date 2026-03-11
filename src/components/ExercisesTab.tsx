@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Volume2, Eye } from 'lucide-react';
+import { ArrowLeft, Check, X, Volume2, Eye, Mic, PenLine } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
@@ -8,9 +8,18 @@ interface Exercise {
   question: string;
   options: string[];
   correct: number;
-  type?: 'choice' | 'listen' | 'whatis';
-  emoji?: string; // for "what is this" type
-  listenWord?: string; // for listen type
+  type?: 'choice' | 'listen' | 'whatis' | 'write' | 'speak';
+  emoji?: string;
+  listenWord?: string;
+  answer?: string; // for write/speak type
+}
+
+function shuffleExercise(ex: Exercise): Exercise {
+  if (ex.type === 'write' || ex.type === 'speak') return ex;
+  const options = [...ex.options];
+  const correctAnswer = options[ex.correct];
+  const shuffled = options.map(o => ({ o, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ o }) => o);
+  return { ...ex, options: shuffled, correct: shuffled.indexOf(correctAnswer) };
 }
 
 const categories = [
@@ -22,6 +31,7 @@ const categories = [
   { id: 'numbers', nameKey: 'cat_numbers', emoji: '🔢' },
   { id: 'animals', nameKey: 'cat_animals', emoji: '🐾' },
   { id: 'colors', nameKey: 'cat_colors', emoji: '🎨' },
+  { id: 'writing', nameKey: 'cat_writing', emoji: '✍️' },
 ];
 
 // Generate exercises based on native lang, course, category AND level

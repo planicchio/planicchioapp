@@ -790,8 +790,115 @@ const allExercises: Record<string, Record<string, Record<string, Exercise[]>>> =
   },
 };
 
+// Writing/speaking exercises (shared, using emojis as "photos")
+const writingExercises: Record<string, Record<string, Exercise[]>> = {
+  pt: {
+    en: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'apple' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'dog' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'house' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sun' },
+      { question: '', emoji: '🚗', options: [], correct: 0, type: 'write', answer: 'car' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'book' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'water' },
+      { question: '', emoji: '🌙', options: [], correct: 0, type: 'speak', answer: 'moon' },
+      { question: '', emoji: '🎸', options: [], correct: 0, type: 'speak', answer: 'guitar' },
+      { question: '', emoji: '✈️', options: [], correct: 0, type: 'speak', answer: 'airplane' },
+    ],
+    es: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'manzana' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'perro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sol' },
+      { question: '', emoji: '🚗', options: [], correct: 0, type: 'write', answer: 'carro' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'agua' },
+      { question: '', emoji: '🌙', options: [], correct: 0, type: 'speak', answer: 'luna' },
+    ],
+    fr: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'pomme' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'chien' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'maison' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'soleil' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'livre' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'eau' },
+    ],
+    de: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'Apfel' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'Hund' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'Haus' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'Sonne' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'Buch' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'Wasser' },
+    ],
+    it: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'mela' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cane' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sole' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+    ],
+    ja: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'りんご' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'いぬ' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'いえ' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: 'たいよう' },
+    ],
+    pt: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'maçã' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cachorro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: 'sol' },
+    ],
+    ko: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: '사과' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: '개' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: '집' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: '태양' },
+    ],
+  },
+  en: {
+    es: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'manzana' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'perro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+    ],
+    fr: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'pomme' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'chien' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'livre' },
+    ],
+    de: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'Apfel' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'Hund' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'Buch' },
+    ],
+    it: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'mela' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cane' },
+    ],
+    ja: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'りんご' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'いぬ' },
+    ],
+    pt: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'maçã' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cachorro' },
+    ],
+    ko: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: '사과' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: '개' },
+    ],
+    en: [],
+  },
+};
+
 // Fallback: for native languages that don't have full exercise data, use pt's data
 const getFallbackExercises = (nativeLang: string, course: string, category: string): Exercise[] => {
+  if (category === 'writing') {
+    return writingExercises[nativeLang]?.[course] || writingExercises.pt?.[course] || writingExercises.pt?.en || [];
+  }
   return allExercises[nativeLang]?.[course]?.[category]
     || allExercises.pt?.[course]?.[category]
     || allExercises.pt?.en?.[category]
@@ -807,11 +914,20 @@ const ExercisesTab = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [writeAnswer, setWriteAnswer] = useState('');
+  const [writeResult, setWriteResult] = useState<'correct' | 'wrong' | null>(null);
 
-  const exercises = selectedCat ? getExercisesForLevel(nativeLang, course, selectedCat, level).length > 0
-    ? getExercisesForLevel(nativeLang, course, selectedCat, level)
-    : getFallbackExercises(nativeLang, course, selectedCat)
-    : [];
+  const rawExercises = useMemo(() => {
+    if (!selectedCat) return [];
+    if (selectedCat === 'writing') {
+      return getFallbackExercises(nativeLang, course, 'writing');
+    }
+    const leveled = getExercisesForLevel(nativeLang, course, selectedCat, level);
+    return leveled.length > 0 ? leveled : getFallbackExercises(nativeLang, course, selectedCat);
+  }, [selectedCat, nativeLang, course, level]);
+
+  // Shuffle exercises once when category is selected
+  const exercises = useMemo(() => rawExercises.map(ex => shuffleExercise(ex)), [rawExercises]);
   const current = exercises[currentIdx];
 
   const langMap: Record<string, string> = {

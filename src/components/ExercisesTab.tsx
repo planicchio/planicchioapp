@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, X, Volume2, Eye } from 'lucide-react';
+import { ArrowLeft, Check, X, Volume2, Eye, Mic, PenLine } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
@@ -8,9 +8,18 @@ interface Exercise {
   question: string;
   options: string[];
   correct: number;
-  type?: 'choice' | 'listen' | 'whatis';
-  emoji?: string; // for "what is this" type
-  listenWord?: string; // for listen type
+  type?: 'choice' | 'listen' | 'whatis' | 'write' | 'speak';
+  emoji?: string;
+  listenWord?: string;
+  answer?: string; // for write/speak type
+}
+
+function shuffleExercise(ex: Exercise): Exercise {
+  if (ex.type === 'write' || ex.type === 'speak') return ex;
+  const options = [...ex.options];
+  const correctAnswer = options[ex.correct];
+  const shuffled = options.map(o => ({ o, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ o }) => o);
+  return { ...ex, options: shuffled, correct: shuffled.indexOf(correctAnswer) };
 }
 
 const categories = [
@@ -22,6 +31,7 @@ const categories = [
   { id: 'numbers', nameKey: 'cat_numbers', emoji: '🔢' },
   { id: 'animals', nameKey: 'cat_animals', emoji: '🐾' },
   { id: 'colors', nameKey: 'cat_colors', emoji: '🎨' },
+  { id: 'writing', nameKey: 'cat_writing', emoji: '✍️' },
 ];
 
 // Generate exercises based on native lang, course, category AND level
@@ -780,8 +790,115 @@ const allExercises: Record<string, Record<string, Record<string, Exercise[]>>> =
   },
 };
 
+// Writing/speaking exercises (shared, using emojis as "photos")
+const writingExercises: Record<string, Record<string, Exercise[]>> = {
+  pt: {
+    en: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'apple' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'dog' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'house' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sun' },
+      { question: '', emoji: '🚗', options: [], correct: 0, type: 'write', answer: 'car' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'book' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'water' },
+      { question: '', emoji: '🌙', options: [], correct: 0, type: 'speak', answer: 'moon' },
+      { question: '', emoji: '🎸', options: [], correct: 0, type: 'speak', answer: 'guitar' },
+      { question: '', emoji: '✈️', options: [], correct: 0, type: 'speak', answer: 'airplane' },
+    ],
+    es: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'manzana' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'perro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sol' },
+      { question: '', emoji: '🚗', options: [], correct: 0, type: 'write', answer: 'carro' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'agua' },
+      { question: '', emoji: '🌙', options: [], correct: 0, type: 'speak', answer: 'luna' },
+    ],
+    fr: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'pomme' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'chien' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'maison' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'soleil' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'livre' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'eau' },
+    ],
+    de: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'Apfel' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'Hund' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'Haus' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'Sonne' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'Buch' },
+      { question: '', emoji: '🌊', options: [], correct: 0, type: 'speak', answer: 'Wasser' },
+    ],
+    it: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'mela' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cane' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'write', answer: 'sole' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+    ],
+    ja: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'りんご' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'いぬ' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'いえ' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: 'たいよう' },
+    ],
+    pt: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'maçã' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cachorro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: 'sol' },
+    ],
+    ko: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: '사과' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: '개' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: '집' },
+      { question: '', emoji: '☀️', options: [], correct: 0, type: 'speak', answer: '태양' },
+    ],
+  },
+  en: {
+    es: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'manzana' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'perro' },
+      { question: '', emoji: '🏠', options: [], correct: 0, type: 'write', answer: 'casa' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'libro' },
+    ],
+    fr: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'pomme' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'chien' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'livre' },
+    ],
+    de: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'Apfel' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'Hund' },
+      { question: '', emoji: '📚', options: [], correct: 0, type: 'speak', answer: 'Buch' },
+    ],
+    it: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'mela' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cane' },
+    ],
+    ja: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'りんご' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'いぬ' },
+    ],
+    pt: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: 'maçã' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: 'cachorro' },
+    ],
+    ko: [
+      { question: '', emoji: '🍎', options: [], correct: 0, type: 'write', answer: '사과' },
+      { question: '', emoji: '🐕', options: [], correct: 0, type: 'write', answer: '개' },
+    ],
+    en: [],
+  },
+};
+
 // Fallback: for native languages that don't have full exercise data, use pt's data
 const getFallbackExercises = (nativeLang: string, course: string, category: string): Exercise[] => {
+  if (category === 'writing') {
+    return writingExercises[nativeLang]?.[course] || writingExercises.pt?.[course] || writingExercises.pt?.en || [];
+  }
   return allExercises[nativeLang]?.[course]?.[category]
     || allExercises.pt?.[course]?.[category]
     || allExercises.pt?.en?.[category]
@@ -797,11 +914,20 @@ const ExercisesTab = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [writeAnswer, setWriteAnswer] = useState('');
+  const [writeResult, setWriteResult] = useState<'correct' | 'wrong' | null>(null);
 
-  const exercises = selectedCat ? getExercisesForLevel(nativeLang, course, selectedCat, level).length > 0
-    ? getExercisesForLevel(nativeLang, course, selectedCat, level)
-    : getFallbackExercises(nativeLang, course, selectedCat)
-    : [];
+  const rawExercises = useMemo(() => {
+    if (!selectedCat) return [];
+    if (selectedCat === 'writing') {
+      return getFallbackExercises(nativeLang, course, 'writing');
+    }
+    const leveled = getExercisesForLevel(nativeLang, course, selectedCat, level);
+    return leveled.length > 0 ? leveled : getFallbackExercises(nativeLang, course, selectedCat);
+  }, [selectedCat, nativeLang, course, level]);
+
+  // Shuffle exercises once when category is selected
+  const exercises = useMemo(() => rawExercises.map(ex => shuffleExercise(ex)), [rawExercises]);
   const current = exercises[currentIdx];
 
   const langMap: Record<string, string> = {
@@ -828,10 +954,64 @@ const ExercisesTab = () => {
         setCurrentIdx(c => c + 1);
         setSelected(null);
         setShowFeedback(false);
+        setWriteAnswer('');
+        setWriteResult(null);
       } else {
         setFinished(true);
       }
     }, 1000);
+  };
+
+  const handleWriteSubmit = () => {
+    if (!writeAnswer.trim() || !current.answer) return;
+    const correct = writeAnswer.trim().toLowerCase() === current.answer.toLowerCase();
+    setWriteResult(correct ? 'correct' : 'wrong');
+    if (correct) setScore(s => s + 1);
+    completeExercise(correct);
+
+    setTimeout(() => {
+      if (currentIdx < exercises.length - 1) {
+        setCurrentIdx(c => c + 1);
+        setWriteAnswer('');
+        setWriteResult(null);
+      } else {
+        setFinished(true);
+      }
+    }, 1200);
+  };
+
+  const handleSpeakSubmit = () => {
+    // Use speech recognition if available, otherwise fallback to write
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = langMap[course] || 'en-US';
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        const correct = transcript.includes(current.answer?.toLowerCase() || '');
+        setWriteResult(correct ? 'correct' : 'wrong');
+        setWriteAnswer(transcript);
+        if (correct) setScore(s => s + 1);
+        completeExercise(correct);
+
+        setTimeout(() => {
+          if (currentIdx < exercises.length - 1) {
+            setCurrentIdx(c => c + 1);
+            setWriteAnswer('');
+            setWriteResult(null);
+          } else {
+            setFinished(true);
+          }
+        }, 1200);
+      };
+      recognition.onerror = () => {
+        // Fallback: treat as text input
+        handleWriteSubmit();
+      };
+      recognition.start();
+    } else {
+      handleWriteSubmit();
+    }
   };
 
   const handleBack = () => {
@@ -841,6 +1021,8 @@ const ExercisesTab = () => {
     setShowFeedback(false);
     setScore(0);
     setFinished(false);
+    setWriteAnswer('');
+    setWriteResult(null);
   };
 
   if (finished) {
@@ -885,6 +1067,17 @@ const ExercisesTab = () => {
     );
   }
 
+  if (!current) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{tr('no_exercises') || 'Nenhum exercício disponível ainda.'}</p>
+        <button onClick={handleBack} className="mt-4 bg-primary text-primary-foreground font-bold px-6 py-2 rounded-full">
+          {tr('back') || 'Voltar'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 pb-4">
       <div className="flex items-center gap-3">
@@ -904,6 +1097,61 @@ const ExercisesTab = () => {
 
       <AnimatePresence mode="wait">
         <motion.div key={currentIdx} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+
+          {/* Write/Speak type */}
+          {(current.type === 'write' || current.type === 'speak') && current.emoji && (
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center justify-center bg-card border-2 border-primary/30 rounded-2xl p-8 mb-3">
+                <span className="text-8xl">{current.emoji}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-primary mb-4">
+                {current.type === 'write' ? <PenLine size={18} /> : <Mic size={18} />}
+                <span className="text-sm font-bold">
+                  {current.type === 'write'
+                    ? (tr('write_what_you_see') || 'Escreva o que você vê!')
+                    : (tr('speak_what_you_see') || 'Fale o que você vê!')}
+                </span>
+              </div>
+              <div className="max-w-xs mx-auto space-y-3">
+                <input
+                  type="text"
+                  value={writeAnswer}
+                  onChange={e => setWriteAnswer(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (current.type === 'write' ? handleWriteSubmit() : handleSpeakSubmit())}
+                  placeholder={current.type === 'write' ? (tr('type_answer') || 'Digite a resposta...') : (tr('type_or_speak') || 'Digite ou clique no microfone...')}
+                  className={`w-full bg-card border-2 rounded-xl px-4 py-3 text-foreground font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary ${
+                    writeResult === 'correct' ? 'border-green-400 bg-green-50 dark:bg-green-900/20' :
+                    writeResult === 'wrong' ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-border'
+                  }`}
+                  disabled={writeResult !== null}
+                />
+                {writeResult === 'wrong' && (
+                  <p className="text-sm text-red-500 font-bold">
+                    {tr('correct_answer') || 'Resposta correta'}: <span className="text-foreground">{current.answer}</span>
+                  </p>
+                )}
+                {writeResult === null && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={current.type === 'write' ? handleWriteSubmit : handleWriteSubmit}
+                      className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded-xl active:scale-95 transition-transform"
+                    >
+                      {tr('confirm') || 'Confirmar'}
+                    </button>
+                    {current.type === 'speak' && (
+                      <button
+                        onClick={handleSpeakSubmit}
+                        className="bg-primary/10 text-primary p-3 rounded-xl hover:bg-primary/20 transition-colors active:scale-95"
+                      >
+                        <Mic size={20} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* What is this - show emoji */}
           {current.type === 'whatis' && current.emoji && (
             <div className="text-center mb-4">
@@ -930,27 +1178,32 @@ const ExercisesTab = () => {
             </div>
           )}
 
-          <h3 className="text-xl font-black text-foreground mb-6 text-center">{current.question}</h3>
-          <div className="space-y-3">
-            {current.options.map((opt, i) => {
-              let bg = 'bg-card border-border';
-              if (showFeedback) {
-                if (i === current.correct) bg = 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-600';
-                else if (i === selected) bg = 'bg-red-100 border-red-400 dark:bg-red-900/30 dark:border-red-600';
-              }
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleAnswer(i)}
-                  className={`w-full p-4 rounded-xl border-2 text-left font-bold transition-all active:scale-[0.98] flex items-center justify-between ${bg}`}
-                >
-                  <span className="text-foreground">{opt}</span>
-                  {showFeedback && i === current.correct && <Check className="text-green-500" size={20} />}
-                  {showFeedback && i === selected && i !== current.correct && <X className="text-red-500" size={20} />}
-                </button>
-              );
-            })}
-          </div>
+          {/* Multiple choice questions */}
+          {current.type !== 'write' && current.type !== 'speak' && (
+            <>
+              <h3 className="text-xl font-black text-foreground mb-6 text-center">{current.question}</h3>
+              <div className="space-y-3">
+                {current.options.map((opt, i) => {
+                  let bg = 'bg-card border-border';
+                  if (showFeedback) {
+                    if (i === current.correct) bg = 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-600';
+                    else if (i === selected) bg = 'bg-red-100 border-red-400 dark:bg-red-900/30 dark:border-red-600';
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleAnswer(i)}
+                      className={`w-full p-4 rounded-xl border-2 text-left font-bold transition-all active:scale-[0.98] flex items-center justify-between ${bg}`}
+                    >
+                      <span className="text-foreground">{opt}</span>
+                      {showFeedback && i === current.correct && <Check className="text-green-500" size={20} />}
+                      {showFeedback && i === selected && i !== current.correct && <X className="text-red-500" size={20} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

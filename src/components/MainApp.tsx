@@ -9,6 +9,7 @@ import CuriositiesTab from './CuriositiesTab';
 import DictionaryTab from './DictionaryTab';
 import CommunityTab from './CommunityTab';
 import ExercisesTab from './ExercisesTab';
+import PetTab from './PetTab';
 import ProfileSheet from './ProfileSheet';
 
 const tabComponents: Record<string, React.FC> = {
@@ -17,6 +18,7 @@ const tabComponents: Record<string, React.FC> = {
   dictionary: DictionaryTab,
   community: CommunityTab,
   exercises: ExercisesTab,
+  pet: PetTab,
 };
 
 const MainApp = () => {

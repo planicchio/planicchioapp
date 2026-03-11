@@ -1,4 +1,4 @@
-import { Home, Lightbulb, BookOpen, Users, PenTool, type LucideIcon } from 'lucide-react';
+import { Home, Lightbulb, BookOpen, Users, PenTool, Heart, type LucideIcon } from 'lucide-react';
 import { useApp, type TabId } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
@@ -6,6 +6,7 @@ const tabKeys: { id: TabId; labelKey: string; icon: LucideIcon }[] = [
   { id: 'home', labelKey: 'tab_home', icon: Home },
   { id: 'curiosities', labelKey: 'tab_tips', icon: Lightbulb },
   { id: 'exercises', labelKey: 'tab_exercises', icon: PenTool },
+  { id: 'pet', labelKey: 'tab_pet', icon: Heart },
   { id: 'dictionary', labelKey: 'tab_dictionary', icon: BookOpen },
   { id: 'community', labelKey: 'tab_social', icon: Users },
 ];
@@ -23,12 +24,12 @@ const BottomNav = () => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all ${
                 active ? 'text-primary scale-110' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Icon size={22} className={active ? 'drop-shadow-sm' : ''} />
-              <span className={`text-[10px] font-bold ${active ? '' : 'font-semibold'}`}>{tr(labelKey)}</span>
+              <Icon size={20} className={active ? 'drop-shadow-sm' : ''} />
+              <span className={`text-[9px] font-bold ${active ? '' : 'font-semibold'}`}>{tr(labelKey)}</span>
               {active && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
             </button>
           );

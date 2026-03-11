@@ -294,6 +294,58 @@ const quizData: Record<string, Record<string, Question[]>> = {
     ],
     ja: [{ question: 'これはあなたの母語です！', options: ['OK'], correct: 0 }],
   },
+  ko: {
+    en: [
+      { question: '"Hello"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"I ___ a student" 완성:', options: ['am', 'is', 'are', 'be'], correct: 0 },
+      { question: '"go"의 과거형:', options: ['goed', 'went', 'gone', 'going'], correct: 1 },
+      { question: '"Nevertheless"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"I would have gone if..." 시제는?', options: ['Second Conditional', 'Third Conditional', 'First Conditional', 'Zero Conditional'], correct: 1 },
+    ],
+    es: [
+      { question: '"Hola"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"Yo ___ estudiante" 완성:', options: ['soy', 'es', 'son', 'eres'], correct: 0 },
+      { question: '"ir"의 과거형:', options: ['fui', 'iba', 'voy', 'iré'], correct: 0 },
+      { question: '"Sin embargo"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"tener"의 접속법:', options: ['tenga', 'tiene', 'tengo', 'tenía'], correct: 0 },
+    ],
+    fr: [
+      { question: '"Bonjour"는 무슨 뜻인가요?', options: ['안녕하세요', '잘자요', '안녕히 가세요', '감사합니다'], correct: 0 },
+      { question: '"Je ___ étudiant" 완성:', options: ['suis', 'est', 'es', 'sont'], correct: 0 },
+      { question: '"aller"의 복합과거:', options: ['je suis allé', "j'ai allé", 'je vais', "j'allais"], correct: 0 },
+      { question: '"Cependant"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"avoir"의 접속법:', options: ["que j'aie", "que j'ai", "que j'avais", "que j'aurai"], correct: 0 },
+    ],
+    de: [
+      { question: '"Hallo"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"Ich ___ Student" 완성:', options: ['bin', 'ist', 'bist', 'sind'], correct: 0 },
+      { question: '"gehen"의 과거형:', options: ['ging', 'geht', 'gehe', 'gingen'], correct: 0 },
+      { question: '"Jedoch"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"haben"의 접속법 II:', options: ['hätte', 'habe', 'hat', 'hatte'], correct: 0 },
+    ],
+    it: [
+      { question: '"Ciao"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"Io ___ studente" 완성:', options: ['sono', 'è', 'sei', 'siamo'], correct: 0 },
+      { question: '"andare"의 근과거:', options: ['sono andato', 'ho andato', 'vado', 'andavo'], correct: 0 },
+      { question: '"Tuttavia"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"avere"의 접속법:', options: ['che io abbia', 'che io ho', 'che io avevo', 'che io avrò'], correct: 0 },
+    ],
+    ja: [
+      { question: '"こんにちは"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"私は学生___" 완성:', options: ['です', 'だ', 'ます', 'いる'], correct: 0 },
+      { question: '"食べる"의 과거형:', options: ['食べた', '食べます', '食べない', '食べて'], correct: 0 },
+      { question: '"しかし"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"する"의 경어:', options: ['なさる', 'します', 'した', 'する'], correct: 0 },
+    ],
+    pt: [
+      { question: '"Olá"는 무슨 뜻인가요?', options: ['안녕하세요', '집', '고양이', '책'], correct: 0 },
+      { question: '"Eu ___ estudante" 완성:', options: ['sou', 'é', 'são', 'és'], correct: 0 },
+      { question: '"ir"의 과거형:', options: ['fui', 'ia', 'vou', 'irei'], correct: 0 },
+      { question: '"Entretanto"의 뜻:', options: ['그럼에도 불구하고', '왜냐하면', '항상', '절대'], correct: 0 },
+      { question: '"ter"의 접속법:', options: ['tenha', 'tem', 'tenho', 'tinha'], correct: 0 },
+    ],
+    ko: [{ question: '이것은 당신의 모국어입니다!', options: ['OK'], correct: 0 }],
+  },
 };
 
 function shuffleQuestion(question: Question): Question {

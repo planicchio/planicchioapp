@@ -377,22 +377,23 @@ const LevelQuiz = () => {
   const { course, nativeLang, setLevel, setStage } = useApp();
   const tr = useTranslation(nativeLang);
   
- const rawQuestions = quizData[nativeLang]?.[course] ?? [];
+  const rawQuestions = quizData[nativeLang]?.[course] ?? [];
 
-const [questions] = useState(() =>
-  rawQuestions.map(q => shuffleQuestion(q))
-);
-  if (!questions.length) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p>Content not available yet for this language pair.</p>
-    </div>
+  const [questions] = useState(() =>
+    rawQuestions.map(q => shuffleQuestion(q))
   );
-}
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+
+  if (!questions.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Content not available yet for this language pair.</p>
+      </div>
+    );
+  }
 
   const handleAnswer = (idx: number) => {
     if (selected !== null) return;

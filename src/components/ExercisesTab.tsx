@@ -954,10 +954,64 @@ const ExercisesTab = () => {
         setCurrentIdx(c => c + 1);
         setSelected(null);
         setShowFeedback(false);
+        setWriteAnswer('');
+        setWriteResult(null);
       } else {
         setFinished(true);
       }
     }, 1000);
+  };
+
+  const handleWriteSubmit = () => {
+    if (!writeAnswer.trim() || !current.answer) return;
+    const correct = writeAnswer.trim().toLowerCase() === current.answer.toLowerCase();
+    setWriteResult(correct ? 'correct' : 'wrong');
+    if (correct) setScore(s => s + 1);
+    completeExercise(correct);
+
+    setTimeout(() => {
+      if (currentIdx < exercises.length - 1) {
+        setCurrentIdx(c => c + 1);
+        setWriteAnswer('');
+        setWriteResult(null);
+      } else {
+        setFinished(true);
+      }
+    }, 1200);
+  };
+
+  const handleSpeakSubmit = () => {
+    // Use speech recognition if available, otherwise fallback to write
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = langMap[course] || 'en-US';
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        const correct = transcript.includes(current.answer?.toLowerCase() || '');
+        setWriteResult(correct ? 'correct' : 'wrong');
+        setWriteAnswer(transcript);
+        if (correct) setScore(s => s + 1);
+        completeExercise(correct);
+
+        setTimeout(() => {
+          if (currentIdx < exercises.length - 1) {
+            setCurrentIdx(c => c + 1);
+            setWriteAnswer('');
+            setWriteResult(null);
+          } else {
+            setFinished(true);
+          }
+        }, 1200);
+      };
+      recognition.onerror = () => {
+        // Fallback: treat as text input
+        handleWriteSubmit();
+      };
+      recognition.start();
+    } else {
+      handleWriteSubmit();
+    }
   };
 
   const handleBack = () => {
@@ -967,6 +1021,8 @@ const ExercisesTab = () => {
     setShowFeedback(false);
     setScore(0);
     setFinished(false);
+    setWriteAnswer('');
+    setWriteResult(null);
   };
 
   if (finished) {
@@ -1011,6 +1067,17 @@ const ExercisesTab = () => {
     );
   }
 
+  if (!current) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{tr('no_exercises') || 'Nenhum exercício disponível ainda.'}</p>
+        <button onClick={handleBack} className="mt-4 bg-primary text-primary-foreground font-bold px-6 py-2 rounded-full">
+          {tr('back') || 'Voltar'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 pb-4">
       <div className="flex items-center gap-3">
@@ -1030,6 +1097,61 @@ const ExercisesTab = () => {
 
       <AnimatePresence mode="wait">
         <motion.div key={currentIdx} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+
+          {/* Write/Speak type */}
+          {(current.type === 'write' || current.type === 'speak') && current.emoji && (
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center justify-center bg-card border-2 border-primary/30 rounded-2xl p-8 mb-3">
+                <span className="text-8xl">{current.emoji}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 text-primary mb-4">
+                {current.type === 'write' ? <PenLine size={18} /> : <Mic size={18} />}
+                <span className="text-sm font-bold">
+                  {current.type === 'write'
+                    ? (tr('write_what_you_see') || 'Escreva o que você vê!')
+                    : (tr('speak_what_you_see') || 'Fale o que você vê!')}
+                </span>
+              </div>
+              <div className="max-w-xs mx-auto space-y-3">
+                <input
+                  type="text"
+                  value={writeAnswer}
+                  onChange={e => setWriteAnswer(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (current.type === 'write' ? handleWriteSubmit() : handleSpeakSubmit())}
+                  placeholder={current.type === 'write' ? (tr('type_answer') || 'Digite a resposta...') : (tr('type_or_speak') || 'Digite ou clique no microfone...')}
+                  className={`w-full bg-card border-2 rounded-xl px-4 py-3 text-foreground font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary ${
+                    writeResult === 'correct' ? 'border-green-400 bg-green-50 dark:bg-green-900/20' :
+                    writeResult === 'wrong' ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-border'
+                  }`}
+                  disabled={writeResult !== null}
+                />
+                {writeResult === 'wrong' && (
+                  <p className="text-sm text-red-500 font-bold">
+                    {tr('correct_answer') || 'Resposta correta'}: <span className="text-foreground">{current.answer}</span>
+                  </p>
+                )}
+                {writeResult === null && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={current.type === 'write' ? handleWriteSubmit : handleWriteSubmit}
+                      className="flex-1 bg-primary text-primary-foreground font-bold py-3 rounded-xl active:scale-95 transition-transform"
+                    >
+                      {tr('confirm') || 'Confirmar'}
+                    </button>
+                    {current.type === 'speak' && (
+                      <button
+                        onClick={handleSpeakSubmit}
+                        className="bg-primary/10 text-primary p-3 rounded-xl hover:bg-primary/20 transition-colors active:scale-95"
+                      >
+                        <Mic size={20} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* What is this - show emoji */}
           {current.type === 'whatis' && current.emoji && (
             <div className="text-center mb-4">
@@ -1056,27 +1178,32 @@ const ExercisesTab = () => {
             </div>
           )}
 
-          <h3 className="text-xl font-black text-foreground mb-6 text-center">{current.question}</h3>
-          <div className="space-y-3">
-            {current.options.map((opt, i) => {
-              let bg = 'bg-card border-border';
-              if (showFeedback) {
-                if (i === current.correct) bg = 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-600';
-                else if (i === selected) bg = 'bg-red-100 border-red-400 dark:bg-red-900/30 dark:border-red-600';
-              }
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleAnswer(i)}
-                  className={`w-full p-4 rounded-xl border-2 text-left font-bold transition-all active:scale-[0.98] flex items-center justify-between ${bg}`}
-                >
-                  <span className="text-foreground">{opt}</span>
-                  {showFeedback && i === current.correct && <Check className="text-green-500" size={20} />}
-                  {showFeedback && i === selected && i !== current.correct && <X className="text-red-500" size={20} />}
-                </button>
-              );
-            })}
-          </div>
+          {/* Multiple choice questions */}
+          {current.type !== 'write' && current.type !== 'speak' && (
+            <>
+              <h3 className="text-xl font-black text-foreground mb-6 text-center">{current.question}</h3>
+              <div className="space-y-3">
+                {current.options.map((opt, i) => {
+                  let bg = 'bg-card border-border';
+                  if (showFeedback) {
+                    if (i === current.correct) bg = 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-600';
+                    else if (i === selected) bg = 'bg-red-100 border-red-400 dark:bg-red-900/30 dark:border-red-600';
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleAnswer(i)}
+                      className={`w-full p-4 rounded-xl border-2 text-left font-bold transition-all active:scale-[0.98] flex items-center justify-between ${bg}`}
+                    >
+                      <span className="text-foreground">{opt}</span>
+                      {showFeedback && i === current.correct && <Check className="text-green-500" size={20} />}
+                      {showFeedback && i === selected && i !== current.correct && <X className="text-red-500" size={20} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

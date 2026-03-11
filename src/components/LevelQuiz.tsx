@@ -55,6 +55,14 @@ const quizData: Record<string, Record<string, Question[]>> = {
       { question: '"しかし" significa:', options: ['Entretanto', 'Porque', 'Sempre', 'Nunca'], correct: 0 },
       { question: 'Keigo de "する":', options: ['なさる', 'します', 'した', 'する'], correct: 0 },
     ],
+    pt: [{ question: 'Este é seu idioma nativo!', options: ['OK'], correct: 0 }],
+    ko: [
+      { question: '"안녕하세요" significa...', options: ['Olá', 'Casa', 'Gato', 'Livro'], correct: 0 },
+      { question: 'Complete: "저는 학생___"', options: ['입니다', '이다', '했다', '있다'], correct: 0 },
+      { question: '"먹다"의 과거:', options: ['먹었다', '먹는다', '먹을다', '먹다'], correct: 0 },
+      { question: '"하지만" significa:', options: ['Entretanto', 'Porque', 'Sempre', 'Nunca'], correct: 0 },
+      { question: '"감사합니다" significa:', options: ['Obrigado', 'Olá', 'Tchau', 'Desculpe'], correct: 0 },
+    ],
   },
   // Native English speakers
   en: {

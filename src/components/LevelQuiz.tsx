@@ -101,6 +101,20 @@ const quizData: Record<string, Record<string, Question[]>> = {
       { question: '"しかし" means:', options: ['However', 'Because', 'Always', 'Never'], correct: 0 },
       { question: 'Keigo of "する":', options: ['なさる', 'します', 'した', 'する'], correct: 0 },
     ],
+    pt: [
+      { question: '"Olá" means...', options: ['Hello', 'House', 'Cat', 'Book'], correct: 0 },
+      { question: 'Complete: "Eu ___ estudante"', options: ['sou', 'é', 'são', 'és'], correct: 0 },
+      { question: 'Past of "ir":', options: ['fui', 'ia', 'vou', 'irei'], correct: 0 },
+      { question: '"Entretanto" means:', options: ['However', 'Because', 'Always', 'Never'], correct: 0 },
+      { question: 'Subjunctive of "ter":', options: ['tenha', 'tem', 'tenho', 'tinha'], correct: 0 },
+    ],
+    ko: [
+      { question: '"안녕하세요" means...', options: ['Hello', 'House', 'Cat', 'Book'], correct: 0 },
+      { question: 'Complete: "저는 학생___"', options: ['입니다', '이다', '했다', '있다'], correct: 0 },
+      { question: 'Past of "먹다":', options: ['먹었다', '먹는다', '먹을다', '먹다'], correct: 0 },
+      { question: '"하지만" means:', options: ['However', 'Because', 'Always', 'Never'], correct: 0 },
+      { question: '"감사합니다" means:', options: ['Thank you', 'Hello', 'Goodbye', 'Sorry'], correct: 0 },
+    ],
     en: [
       { question: 'This is your native language!', options: ['OK'], correct: 0 },
     ],

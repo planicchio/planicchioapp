@@ -1399,6 +1399,14 @@ export const t: Translations = {
     correct_answer: '정답', confirm: '확인', post: '게시',
     community_desc: '다른 학습자들과 공유하고 소통하세요!',
     no_exercises: '아직 연습이 없습니다.',
+    feed_challenge: '단어를 입력해서 먹이를 주세요!',
+    play_challenge: '맞추면 놀 수 있어요!',
+    translate_word: '번역하세요',
+    social_feed: '피드',
+    ranking: '랭킹',
+    weekly_ranking: '주간 랭킹',
+    ranking_reset: '매주 일요일 초기화',
+    your_streak: '나의 연속 기록',
   },
 };
 

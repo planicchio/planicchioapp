@@ -36,7 +36,7 @@ const categories = [
 
 // Generate exercises based on native lang, course, category AND level
 const getExercisesForLevel = (nativeLang: string, course: string, category: string, level: string): Exercise[] => {
-  const data = allExercises[nativeLang]?.[course]?.[category] || allExercises.pt?.en?.[category] || [];
+  const data = getFallbackExercises(nativeLang, course, category);
   // Filter by level ranges
   const levelIdx = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(level);
   const startIdx = Math.min(levelIdx * 3, data.length);
@@ -894,15 +894,30 @@ const writingExercises: Record<string, Record<string, Exercise[]>> = {
   },
 };
 
-// Fallback: for native languages that don't have full exercise data, use pt's data
+// Universal fallback: try native→course, then pt→course, then any lang→course, then pt→en
 const getFallbackExercises = (nativeLang: string, course: string, category: string): Exercise[] => {
   if (category === 'writing') {
-    return writingExercises[nativeLang]?.[course] || writingExercises.pt?.[course] || writingExercises.pt?.en || [];
+    return writingExercises[nativeLang]?.[course] 
+      || writingExercises.pt?.[course] 
+      || writingExercises.en?.[course]
+      || writingExercises.pt?.en || [];
   }
-  return allExercises[nativeLang]?.[course]?.[category]
-    || allExercises.pt?.[course]?.[category]
-    || allExercises.pt?.en?.[category]
-    || [];
+  // Try exact match first
+  const exact = allExercises[nativeLang]?.[course]?.[category];
+  if (exact && exact.length > 0) return exact;
+  // Try pt as native with same course
+  const ptCourse = allExercises.pt?.[course]?.[category];
+  if (ptCourse && ptCourse.length > 0) return ptCourse;
+  // Try en as native with same course  
+  const enCourse = allExercises.en?.[course]?.[category];
+  if (enCourse && enCourse.length > 0) return enCourse;
+  // Try any native lang that has this course
+  for (const nl of Object.keys(allExercises)) {
+    const data = allExercises[nl]?.[course]?.[category];
+    if (data && data.length > 0) return data;
+  }
+  // Ultimate fallback: pt→en
+  return allExercises.pt?.en?.[category] || [];
 };
 
 const ExercisesTab = () => {

@@ -36,7 +36,7 @@ const categories = [
 
 // Generate exercises based on native lang, course, category AND level
 const getExercisesForLevel = (nativeLang: string, course: string, category: string, level: string): Exercise[] => {
-  const data = allExercises[nativeLang]?.[course]?.[category] || allExercises.pt?.en?.[category] || [];
+  const data = getFallbackExercises(nativeLang, course, category);
   // Filter by level ranges
   const levelIdx = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(level);
   const startIdx = Math.min(levelIdx * 3, data.length);

@@ -34,6 +34,8 @@ const categories = [
   { id: 'writing', nameKey: 'cat_writing', emoji: '✍️' },
 ];
 
+import { generateExercises as generateFromWordBank } from '@/data/wordBank';
+
 // Generate exercises based on native lang, course, category AND level
 const getExercisesForLevel = (nativeLang: string, course: string, category: string, level: string): Exercise[] => {
   const data = getFallbackExercises(nativeLang, course, category);

@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Utensils, Gamepad2, Lock, MessageCircle, Check, X } from 'lucide-react';
+import { Heart, Utensils, Gamepad2, Lock, MessageCircle } from 'lucide-react';
 import { useApp, PETS } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { getFeedWords, getPlayWords } from '@/data/wordBank';
 
 const petStages = [
   { minLevel: 1, label: 'Bebê', emoji: '🥚', size: 'text-6xl' },
@@ -11,88 +12,6 @@ const petStages = [
   { minLevel: 7, label: 'Adulto', emoji: '', size: 'text-9xl' },
   { minLevel: 10, label: 'Mestre', emoji: '👑', size: 'text-9xl' },
 ];
-
-// Word challenges for feeding/playing - by course language
-const feedWords: Record<string, { word: string; translation: string }[]> = {
-  en: [
-    { word: 'apple', translation: 'maçã' }, { word: 'bread', translation: 'pão' },
-    { word: 'water', translation: 'água' }, { word: 'milk', translation: 'leite' },
-    { word: 'cheese', translation: 'queijo' }, { word: 'rice', translation: 'arroz' },
-    { word: 'chicken', translation: 'frango' }, { word: 'fish', translation: 'peixe' },
-    { word: 'cake', translation: 'bolo' }, { word: 'juice', translation: 'suco' },
-  ],
-  es: [
-    { word: 'manzana', translation: 'maçã' }, { word: 'pan', translation: 'pão' },
-    { word: 'agua', translation: 'água' }, { word: 'leche', translation: 'leite' },
-    { word: 'queso', translation: 'queijo' }, { word: 'arroz', translation: 'arroz' },
-  ],
-  fr: [
-    { word: 'pomme', translation: 'maçã' }, { word: 'pain', translation: 'pão' },
-    { word: 'eau', translation: 'água' }, { word: 'lait', translation: 'leite' },
-    { word: 'fromage', translation: 'queijo' },
-  ],
-  de: [
-    { word: 'Apfel', translation: 'maçã' }, { word: 'Brot', translation: 'pão' },
-    { word: 'Wasser', translation: 'água' }, { word: 'Milch', translation: 'leite' },
-    { word: 'Käse', translation: 'queijo' },
-  ],
-  it: [
-    { word: 'mela', translation: 'maçã' }, { word: 'pane', translation: 'pão' },
-    { word: 'acqua', translation: 'água' }, { word: 'latte', translation: 'leite' },
-  ],
-  ja: [
-    { word: 'りんご', translation: 'maçã' }, { word: 'パン', translation: 'pão' },
-    { word: '水', translation: 'água' }, { word: '牛乳', translation: 'leite' },
-  ],
-  pt: [
-    { word: 'maçã', translation: 'apple' }, { word: 'pão', translation: 'bread' },
-    { word: 'água', translation: 'water' }, { word: 'leite', translation: 'milk' },
-  ],
-  ko: [
-    { word: '사과', translation: 'maçã' }, { word: '빵', translation: 'pão' },
-    { word: '물', translation: 'água' }, { word: '우유', translation: 'leite' },
-  ],
-};
-
-const playWords: Record<string, { word: string; options: string[]; correct: number }[]> = {
-  en: [
-    { word: '🐕', options: ['dog', 'cat', 'bird', 'fish'], correct: 0 },
-    { word: '🌞', options: ['sun', 'moon', 'star', 'cloud'], correct: 0 },
-    { word: '🏠', options: ['house', 'car', 'tree', 'ball'], correct: 0 },
-    { word: '🎸', options: ['guitar', 'piano', 'drum', 'flute'], correct: 0 },
-    { word: '🌊', options: ['ocean', 'river', 'lake', 'rain'], correct: 0 },
-  ],
-  es: [
-    { word: '🐕', options: ['perro', 'gato', 'pájaro', 'pez'], correct: 0 },
-    { word: '🌞', options: ['sol', 'luna', 'estrella', 'nube'], correct: 0 },
-    { word: '🏠', options: ['casa', 'coche', 'árbol', 'pelota'], correct: 0 },
-  ],
-  fr: [
-    { word: '🐕', options: ['chien', 'chat', 'oiseau', 'poisson'], correct: 0 },
-    { word: '🌞', options: ['soleil', 'lune', 'étoile', 'nuage'], correct: 0 },
-    { word: '🏠', options: ['maison', 'voiture', 'arbre', 'balle'], correct: 0 },
-  ],
-  de: [
-    { word: '🐕', options: ['Hund', 'Katze', 'Vogel', 'Fisch'], correct: 0 },
-    { word: '🌞', options: ['Sonne', 'Mond', 'Stern', 'Wolke'], correct: 0 },
-  ],
-  it: [
-    { word: '🐕', options: ['cane', 'gatto', 'uccello', 'pesce'], correct: 0 },
-    { word: '🌞', options: ['sole', 'luna', 'stella', 'nuvola'], correct: 0 },
-  ],
-  ja: [
-    { word: '🐕', options: ['いぬ', 'ねこ', 'とり', 'さかな'], correct: 0 },
-    { word: '🌞', options: ['たいよう', 'つき', 'ほし', 'くも'], correct: 0 },
-  ],
-  pt: [
-    { word: '🐕', options: ['cachorro', 'gato', 'pássaro', 'peixe'], correct: 0 },
-    { word: '🌞', options: ['sol', 'lua', 'estrela', 'nuvem'], correct: 0 },
-  ],
-  ko: [
-    { word: '🐕', options: ['개', '고양이', '새', '물고기'], correct: 0 },
-    { word: '🌞', options: ['태양', '달', '별', '구름'], correct: 0 },
-  ],
-};
 
 const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
 
@@ -124,12 +43,14 @@ const PetTab = () => {
   }
 
   const moodText = petMood === 'happy' ? '😊' : petMood === 'sad' ? '😢' : petMood === 'dancing' ? '💃' : '😊';
-  const canFeed = petHunger < 80;
-  const canPlay = petEnergy < 80;
+
+  // Use wordBank for feed/play challenges - works for ALL language combinations
+  const feedWordsList = useMemo(() => getFeedWords(nativeLang, course), [nativeLang, course]);
+  const playWordsList = useMemo(() => getPlayWords(course), [course]);
 
   const startFeed = () => {
-    const words = feedWords[course] || feedWords.en;
-    const w = words[Math.floor(Math.random() * words.length)];
+    if (feedWordsList.length === 0) return;
+    const w = feedWordsList[Math.floor(Math.random() * feedWordsList.length)];
     setFeedChallenge(w);
     setFeedInput('');
     setFeedResult(null);
@@ -147,8 +68,8 @@ const PetTab = () => {
   };
 
   const startPlay = () => {
-    const words = playWords[course] || playWords.en;
-    const w = words[Math.floor(Math.random() * words.length)];
+    if (playWordsList.length === 0) return;
+    const w = playWordsList[Math.floor(Math.random() * playWordsList.length)];
     // Shuffle options
     const opts = [...w.options];
     const correctAns = opts[w.correct];
@@ -269,19 +190,17 @@ const PetTab = () => {
         </motion.div>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - ALWAYS available (no threshold blocking) */}
       {!feedMode && !playMode && (
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={startFeed} disabled={!canFeed}
-            className={`bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 ${
-              canFeed ? 'hover:shadow-md hover:border-primary/50' : 'opacity-50 cursor-not-allowed'}`}>
+          <button onClick={startFeed}
+            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
             <Utensils size={24} className="text-primary" />
             <span className="font-bold text-sm text-foreground">{tr('feed') || 'Alimentar'}</span>
             <span className="text-[10px] text-muted-foreground">+30 {tr('hunger') || 'Fome'}</span>
           </button>
-          <button onClick={startPlay} disabled={!canPlay}
-            className={`bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 ${
-              canPlay ? 'hover:shadow-md hover:border-primary/50' : 'opacity-50 cursor-not-allowed'}`}>
+          <button onClick={startPlay}
+            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
             <Gamepad2 size={24} className="text-primary" />
             <span className="font-bold text-sm text-foreground">{tr('play') || 'Brincar'}</span>
             <span className="text-[10px] text-muted-foreground">+25 {tr('energy') || 'Energia'}</span>

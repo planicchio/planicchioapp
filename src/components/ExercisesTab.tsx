@@ -897,28 +897,43 @@ const writingExercises: Record<string, Record<string, Exercise[]>> = {
 };
 
 // Universal fallback: try native→course, then pt→course, then any lang→course, then pt→en
+const isNativeLangPlaceholder = (exercises: Exercise[]): boolean => {
+  return exercises.length <= 1 && exercises[0]?.question?.includes('idioma nativo');
+};
+
 const getFallbackExercises = (nativeLang: string, course: string, category: string): Exercise[] => {
   if (category === 'writing') {
-    return writingExercises[nativeLang]?.[course] 
+    const writing = writingExercises[nativeLang]?.[course] 
       || writingExercises.pt?.[course] 
       || writingExercises.en?.[course]
       || writingExercises.pt?.en || [];
+    if (writing.length > 0) return writing;
+    // Generate writing exercises from word bank
+    return generateFromWordBank(nativeLang, course, 'food').filter(e => e.type === 'write') as Exercise[];
   }
   // Try exact match first
   const exact = allExercises[nativeLang]?.[course]?.[category];
-  if (exact && exact.length > 0) return exact;
-  // Try pt as native with same course
-  const ptCourse = allExercises.pt?.[course]?.[category];
-  if (ptCourse && ptCourse.length > 0) return ptCourse;
-  // Try en as native with same course  
-  const enCourse = allExercises.en?.[course]?.[category];
-  if (enCourse && enCourse.length > 0) return enCourse;
+  if (exact && exact.length > 0 && !isNativeLangPlaceholder(exact)) return exact;
+  // Try pt as native with same course (but skip if course is pt - would get "native language" placeholder)
+  if (course !== 'pt') {
+    const ptCourse = allExercises.pt?.[course]?.[category];
+    if (ptCourse && ptCourse.length > 0 && !isNativeLangPlaceholder(ptCourse)) return ptCourse;
+  }
+  // Try en as native with same course (skip if course is en)
+  if (course !== 'en') {
+    const enCourse = allExercises.en?.[course]?.[category];
+    if (enCourse && enCourse.length > 0 && !isNativeLangPlaceholder(enCourse)) return enCourse;
+  }
   // Try any native lang that has this course
   for (const nl of Object.keys(allExercises)) {
+    if (nl === course) continue; // Skip same-language entries
     const data = allExercises[nl]?.[course]?.[category];
-    if (data && data.length > 0) return data;
+    if (data && data.length > 0 && !isNativeLangPlaceholder(data)) return data;
   }
-  // Ultimate fallback: pt→en
+  // UNIVERSAL FALLBACK: Generate exercises dynamically from word bank
+  const generated = generateFromWordBank(nativeLang, course, category) as Exercise[];
+  if (generated.length > 0) return generated;
+  // Last resort: pt→en
   return allExercises.pt?.en?.[category] || [];
 };
 

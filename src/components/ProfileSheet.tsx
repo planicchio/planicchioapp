@@ -31,7 +31,9 @@ const ProfileSheet = ({ open, onClose }: Props) => {
   const [showPets, setShowPets] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
-  const [diaryColor, setDiaryColor] = useState('default');
+  const [diaryColor, setDiaryColor] = useState(() => {
+    try { return localStorage.getItem('planicchio_diary_color') || 'default'; } catch { return 'default'; }
+  });
   const [learnedWord, setLearnedWord] = useState('');
   const [learnedWords, setLearnedWords] = useState<string[]>(() => {
     try {

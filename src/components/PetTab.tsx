@@ -1,17 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Utensils, Gamepad2, Lock, MessageCircle } from 'lucide-react';
+import { Heart, Utensils, Gamepad2, Lock, MessageCircle, Gift } from 'lucide-react';
 import { useApp, PETS } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
-import { getFeedWords, getPlayWords } from '@/data/wordBank';
+import { getFeedWords, getPlayWords, wordBank, type LangCode } from '@/data/wordBank';
 
 const petStages = [
-  { minLevel: 1, label: 'Bebê', emoji: '🥚', size: 'text-6xl' },
-  { minLevel: 2, label: 'Filhote', emoji: '', size: 'text-7xl' },
-  { minLevel: 4, label: 'Jovem', emoji: '', size: 'text-8xl' },
-  { minLevel: 7, label: 'Adulto', emoji: '', size: 'text-9xl' },
-  { minLevel: 10, label: 'Mestre', emoji: '👑', size: 'text-9xl' },
+  { minLevel: 1, label: 'baby', emoji: '🥚', size: 'text-6xl' },
+  { minLevel: 2, label: 'puppy', emoji: '', size: 'text-7xl' },
+  { minLevel: 4, label: 'young', emoji: '', size: 'text-8xl' },
+  { minLevel: 7, label: 'adult', emoji: '', size: 'text-9xl' },
+  { minLevel: 10, label: 'master', emoji: '👑', size: 'text-9xl' },
 ];
+
+const stageLabels: Record<string, Record<string, string>> = {
+  baby: { pt: 'Bebê', en: 'Baby', es: 'Bebé', fr: 'Bébé', de: 'Baby', it: 'Bebè', ja: '赤ちゃん', ko: '아기' },
+  puppy: { pt: 'Filhote', en: 'Puppy', es: 'Cachorro', fr: 'Chiot', de: 'Welpe', it: 'Cucciolo', ja: '子犬', ko: '강아지' },
+  young: { pt: 'Jovem', en: 'Young', es: 'Joven', fr: 'Jeune', de: 'Jung', it: 'Giovane', ja: '若い', ko: '젊은' },
+  adult: { pt: 'Adulto', en: 'Adult', es: 'Adulto', fr: 'Adulte', de: 'Erwachsen', it: 'Adulto', ja: '大人', ko: '성인' },
+  master: { pt: 'Mestre', en: 'Master', es: 'Maestro', fr: 'Maître', de: 'Meister', it: 'Maestro', ja: 'マスター', ko: '마스터' },
+};
+
+const foodEmojis = ['🍖', '🍕', '🍎', '🥕', '🐟', '🍰', '🥛', '🍗'];
 
 const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
 
@@ -34,6 +44,15 @@ const PetTab = () => {
   const [playChallenge, setPlayChallenge] = useState<{ word: string; options: string[]; correct: number } | null>(null);
   const [playSelected, setPlaySelected] = useState<number | null>(null);
 
+  // Drag food state
+  const [earnedFood, setEarnedFood] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('planicchio_pet_food') || '[]'); } catch { return []; }
+  });
+  const [draggingFood, setDraggingFood] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [showFeedAnim, setShowFeedAnim] = useState(false);
+  const petRef = useRef<HTMLDivElement>(null);
+
   const petEmoji = getPetEmoji();
   const petName = PETS.find(p => p.id === pet)?.name || 'Pet';
 
@@ -42,11 +61,16 @@ const PetTab = () => {
     if (petLevel >= petStages[i].minLevel) { currentStage = petStages[i]; break; }
   }
 
+  const stageLabel = stageLabels[currentStage.label]?.[nativeLang] || stageLabels[currentStage.label]?.en || currentStage.label;
   const moodText = petMood === 'happy' ? '😊' : petMood === 'sad' ? '😢' : petMood === 'dancing' ? '💃' : '😊';
 
-  // Use wordBank for feed/play challenges - works for ALL language combinations
   const feedWordsList = useMemo(() => getFeedWords(nativeLang, course), [nativeLang, course]);
   const playWordsList = useMemo(() => getPlayWords(course), [course]);
+
+  const saveFood = (foods: string[]) => {
+    setEarnedFood(foods);
+    localStorage.setItem('planicchio_pet_food', JSON.stringify(foods));
+  };
 
   const startFeed = () => {
     if (feedWordsList.length === 0) return;
@@ -63,6 +87,9 @@ const PetTab = () => {
     setFeedResult(correct ? 'correct' : 'wrong');
     if (correct) {
       feedPet();
+      // Earn a random food emoji
+      const newFood = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+      saveFood([...earnedFood, newFood]);
     }
     setTimeout(() => { setFeedMode(false); setFeedResult(null); }, 1500);
   };
@@ -70,7 +97,6 @@ const PetTab = () => {
   const startPlay = () => {
     if (playWordsList.length === 0) return;
     const w = playWordsList[Math.floor(Math.random() * playWordsList.length)];
-    // Shuffle options
     const opts = [...w.options];
     const correctAns = opts[w.correct];
     const shuffled = opts.sort(() => Math.random() - 0.5);
@@ -88,14 +114,27 @@ const PetTab = () => {
     setTimeout(() => { setPlayMode(false); setPlaySelected(null); }, 1500);
   };
 
+  const handleDragFood = (food: string, idx: number) => {
+    setDraggingFood(food);
+  };
+
+  const handleDropOnPet = (foodIdx: number) => {
+    feedPet();
+    setShowFeedAnim(true);
+    const newFoods = [...earnedFood];
+    newFoods.splice(foodIdx, 1);
+    saveFood(newFoods);
+    setTimeout(() => setShowFeedAnim(false), 1000);
+  };
+
   return (
     <div className="space-y-5 pb-4">
       <div className="text-center mb-2">
-        <h2 className="text-2xl font-black text-foreground">{tr('my_pet') || 'Meu Pet'}</h2>
+        <h2 className="text-2xl font-black text-foreground">{tr('my_pet') || 'My Pet'}</h2>
       </div>
 
       {/* Pet Display */}
-      <div className="bg-card rounded-2xl p-6 border border-border text-center relative overflow-hidden">
+      <div ref={petRef} className="bg-card rounded-2xl p-6 border border-border text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
         <div className="relative">
           {currentStage.minLevel >= 10 && (
@@ -103,26 +142,57 @@ const PetTab = () => {
               animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>👑</motion.span>
           )}
           <motion.div className={`${currentStage.size} mb-3 inline-block`}
-            animate={{ y: [0, -10, 0], rotate: petMood === 'dancing' ? [0, 5, -5, 0] : 0 }}
+            animate={{
+              y: [0, -10, 0],
+              rotate: petMood === 'dancing' ? [0, 5, -5, 0] : 0,
+              scale: showFeedAnim ? [1, 1.2, 1] : 1,
+            }}
             transition={{ duration: 2, repeat: Infinity }}>
             {petLevel < 2 ? '🥚' : petEmoji}
           </motion.div>
+          {showFeedAnim && (
+            <motion.span className="absolute text-4xl" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 0, y: -40 }}
+              transition={{ duration: 1 }}>😋</motion.span>
+          )}
           <h3 className="text-xl font-black text-foreground">{petName}</h3>
           <p className="text-sm text-muted-foreground">
-            {tr('level') || 'Nível'} {petLevel} · {currentStage.label} {moodText}
+            {tr('level') || 'Level'} {petLevel} · {stageLabel} {moodText}
           </p>
           <div className="mt-2 inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
-            {xp} XP {tr('total_xp') || 'total'}
+            {xp} XP
           </div>
         </div>
       </div>
 
+      {/* Food Inventory - Drag to Pet */}
+      {earnedFood.length > 0 && (
+        <div className="bg-card rounded-2xl p-4 border border-border">
+          <h3 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
+            <Gift size={16} className="text-primary" />
+            {tr('food_inventory') || 'Comida ganha'} ({earnedFood.length})
+          </h3>
+          <p className="text-[10px] text-muted-foreground mb-2">{tr('tap_food_to_feed') || 'Toque na comida para alimentar!'}</p>
+          <div className="flex flex-wrap gap-2">
+            {earnedFood.map((food, i) => (
+              <motion.button
+                key={i}
+                whileTap={{ scale: 0.8 }}
+                onClick={() => handleDropOnPet(i)}
+                className="text-3xl p-2 bg-muted rounded-xl hover:bg-primary/10 transition-colors cursor-pointer active:scale-90"
+              >
+                {food}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { emoji: '🍖', label: tr('hunger') || 'Fome', value: petHunger },
-          { emoji: '⚡', label: tr('energy') || 'Energia', value: petEnergy },
-          { emoji: '💖', label: tr('happiness') || 'Felicidade', value: petHappiness },
+          { emoji: '🍖', label: tr('hunger') || 'Hunger', value: petHunger },
+          { emoji: '⚡', label: tr('energy') || 'Energy', value: petEnergy },
+          { emoji: '💖', label: tr('happiness') || 'Happiness', value: petHappiness },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl p-3 border border-border text-center">
             <span className="text-2xl">{stat.emoji}</span>
@@ -142,8 +212,8 @@ const PetTab = () => {
       {feedMode && feedChallenge && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl p-5 border-2 border-primary/30">
-          <p className="text-sm font-bold text-foreground mb-1">🍖 {tr('feed_challenge') || 'Escreva a palavra para alimentar!'}</p>
-          <p className="text-xs text-muted-foreground mb-3">{tr('translate_word') || 'Traduza'}: <strong>{feedChallenge.translation}</strong></p>
+          <p className="text-sm font-bold text-foreground mb-1">🍖 {tr('feed_challenge') || 'Type the word to feed!'}</p>
+          <p className="text-xs text-muted-foreground mb-3">{tr('translate_word') || 'Translate'}: <strong>{feedChallenge.translation}</strong></p>
           <input value={feedInput} onChange={e => setFeedInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submitFeed()}
             placeholder={feedChallenge.word.charAt(0) + '...'}
@@ -156,11 +226,11 @@ const PetTab = () => {
             <p className="text-xs text-red-500 font-bold mt-2">✗ {feedChallenge.word}</p>
           )}
           {feedResult === 'correct' && (
-            <p className="text-xs text-green-500 font-bold mt-2">✓ +30 {tr('hunger') || 'Fome'}!</p>
+            <p className="text-xs text-green-500 font-bold mt-2">✓ +🍖 {tr('food_earned') || 'Comida ganha!'}</p>
           )}
           {feedResult === null && (
             <button onClick={submitFeed} className="w-full mt-3 bg-primary text-primary-foreground font-bold py-2 rounded-xl active:scale-95 transition-transform">
-              {tr('confirm') || 'Confirmar'}
+              {tr('confirm') || 'Confirm'}
             </button>
           )}
         </motion.div>
@@ -170,7 +240,7 @@ const PetTab = () => {
       {playMode && playChallenge && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-2xl p-5 border-2 border-primary/30">
-          <p className="text-sm font-bold text-foreground mb-1">🎮 {tr('play_challenge') || 'Acerte para brincar!'}</p>
+          <p className="text-sm font-bold text-foreground mb-1">🎮 {tr('play_challenge') || 'Get it right to play!'}</p>
           <div className="text-6xl text-center my-3">{playChallenge.word}</div>
           <div className="grid grid-cols-2 gap-2">
             {playChallenge.options.map((opt, i) => {
@@ -190,20 +260,20 @@ const PetTab = () => {
         </motion.div>
       )}
 
-      {/* Action Buttons - ALWAYS available (no threshold blocking) */}
+      {/* Action Buttons */}
       {!feedMode && !playMode && (
         <div className="grid grid-cols-2 gap-3">
           <button onClick={startFeed}
             className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
             <Utensils size={24} className="text-primary" />
-            <span className="font-bold text-sm text-foreground">{tr('feed') || 'Alimentar'}</span>
-            <span className="text-[10px] text-muted-foreground">+30 {tr('hunger') || 'Fome'}</span>
+            <span className="font-bold text-sm text-foreground">{tr('feed') || 'Feed'}</span>
+            <span className="text-[10px] text-muted-foreground">+🍖</span>
           </button>
           <button onClick={startPlay}
             className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
             <Gamepad2 size={24} className="text-primary" />
-            <span className="font-bold text-sm text-foreground">{tr('play') || 'Brincar'}</span>
-            <span className="text-[10px] text-muted-foreground">+25 {tr('energy') || 'Energia'}</span>
+            <span className="font-bold text-sm text-foreground">{tr('play') || 'Play'}</span>
+            <span className="text-[10px] text-muted-foreground">+⚡</span>
           </button>
         </div>
       )}
@@ -211,20 +281,21 @@ const PetTab = () => {
       {/* Growth Progress */}
       <div className="bg-card rounded-2xl p-4 border border-border">
         <h3 className="font-black text-foreground mb-3 flex items-center gap-2">
-          <Heart size={16} className="text-primary" /> {tr('growth') || 'Crescimento'}
+          <Heart size={16} className="text-primary" /> {tr('growth') || 'Growth'}
         </h3>
         <div className="space-y-2">
           {petStages.map((stage, i) => {
             const isActive = petLevel >= stage.minLevel;
             const isCurrent = currentStage === stage;
+            const label = stageLabels[stage.label]?.[nativeLang] || stageLabels[stage.label]?.en || stage.label;
             return (
               <div key={i} className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
                 isCurrent ? 'bg-primary/10 border border-primary/30' : isActive ? 'opacity-70' : 'opacity-30'}`}>
                 <span className="text-2xl">{stage.minLevel < 2 ? '🥚' : petEmoji}</span>
                 <div className="flex-1">
-                  <p className="font-bold text-sm text-foreground">{stage.label}</p>
+                  <p className="font-bold text-sm text-foreground">{label}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {tr('level') || 'Nível'} {stage.minLevel}+ ({stage.minLevel * 200} XP)
+                    {tr('level') || 'Level'} {stage.minLevel}+ ({stage.minLevel * 200} XP)
                   </p>
                 </div>
                 {isActive && <span className="text-green-500">✅</span>}
@@ -240,9 +311,9 @@ const PetTab = () => {
           <Lock className="text-primary/50 flex-shrink-0" size={20} />
           <div className="flex-1">
             <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-              <MessageCircle size={14} /> {tr('chat_with_pet') || 'Conversar com Pet'}
+              <MessageCircle size={14} /> {tr('chat_with_pet') || 'Chat with Pet'}
             </h4>
-            <p className="text-xs text-muted-foreground">{tr('chat_pet_desc') || 'Converse com seu pet usando IA! Disponível para VIP.'}</p>
+            <p className="text-xs text-muted-foreground">{tr('chat_pet_desc') || 'Chat with your pet using AI! Available for VIP.'}</p>
           </div>
           <a href={VIP_URL} target="_blank" rel="noopener noreferrer"
             className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">VIP</a>

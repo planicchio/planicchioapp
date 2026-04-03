@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ArrowLeft, Volume2, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { wordBank, type LangCode } from '@/data/wordBank';
 
 interface ListenQuestion {
   word: string;
@@ -10,108 +11,27 @@ interface ListenQuestion {
   correct: number;
 }
 
-const listenData: Record<string, ListenQuestion[]> = {
-  en: [
-    { word: 'Hello', options: ['Olá', 'Tchau', 'Obrigado', 'Por favor'], correct: 0 },
-    { word: 'Good morning', options: ['Bom dia', 'Boa noite', 'Boa tarde', 'Tchau'], correct: 0 },
-    { word: 'Thank you very much', options: ['Muito obrigado', 'De nada', 'Com licença', 'Desculpe'], correct: 0 },
-    { word: 'How are you?', options: ['Como você está?', 'Onde você mora?', 'Qual seu nome?', 'Quantos anos tem?'], correct: 0 },
-    { word: 'I love you', options: ['Eu te amo', 'Eu te odeio', 'Eu te conheço', 'Eu te ajudo'], correct: 0 },
-  ],
-  es: [
-    { word: 'Hola', options: ['Olá', 'Tchau', 'Obrigado', 'Desculpe'], correct: 0 },
-    { word: 'Buenos días', options: ['Bom dia', 'Boa noite', 'Tchau', 'Obrigado'], correct: 0 },
-    { word: 'Muchas gracias', options: ['Muito obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-    { word: '¿Cómo estás?', options: ['Como você está?', 'Onde mora?', 'Qual seu nome?', 'Quantos anos?'], correct: 0 },
-  ],
-  fr: [
-    { word: 'Bonjour', options: ['Bom dia', 'Boa noite', 'Tchau', 'Obrigado'], correct: 0 },
-    { word: 'Merci beaucoup', options: ['Muito obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-    { word: 'Comment allez-vous?', options: ['Como vai você?', 'Onde mora?', 'Qual seu nome?', 'Quanto custa?'], correct: 0 },
-  ],
-  de: [
-    { word: 'Guten Morgen', options: ['Bom dia', 'Boa noite', 'Tchau', 'Obrigado'], correct: 0 },
-    { word: 'Danke schön', options: ['Muito obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-    { word: 'Wie geht es Ihnen?', options: ['Como vai você?', 'Onde mora?', 'Qual seu nome?', 'Quanto custa?'], correct: 0 },
-  ],
-  it: [
-    { word: 'Buongiorno', options: ['Bom dia', 'Boa noite', 'Tchau', 'Obrigado'], correct: 0 },
-    { word: 'Grazie mille', options: ['Muito obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-    { word: 'Come stai?', options: ['Como vai você?', 'Onde mora?', 'Qual seu nome?', 'Quanto custa?'], correct: 0 },
-  ],
-  ja: [
-    { word: 'おはようございます', options: ['Bom dia', 'Boa noite', 'Tchau', 'Obrigado'], correct: 0 },
-    { word: 'ありがとうございます', options: ['Muito obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-  ],
-  pt: [
-    { word: 'Bom dia', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-    { word: 'Obrigado', options: ['Thank you', 'Please', 'Sorry', 'Hello'], correct: 0 },
-  ],
-  ko: [
-    { word: '안녕하세요', options: ['Olá', 'Tchau', 'Obrigado', 'Desculpe'], correct: 0 },
-    { word: '감사합니다', options: ['Obrigado', 'De nada', 'Com licença', 'Tchau'], correct: 0 },
-  ],
-};
+function generateListenQuestions(nativeLang: string, course: string): ListenQuestion[] {
+  const nl = nativeLang as LangCode;
+  const cl = course as LangCode;
+  const questions: ListenQuestion[] = [];
+  const allWords = Object.values(wordBank).flat();
+  const usable = allWords.filter(w => w[cl] && w[nl] && w[cl] !== w[nl]);
+  const shuffled = [...usable].sort(() => Math.random() - 0.5);
 
-// Adapt options to native language
-const listenDataByNative: Record<string, Record<string, ListenQuestion[]>> = {
-  pt: listenData,
-  en: {
-    es: [
-      { word: 'Hola', options: ['Hello', 'Goodbye', 'Thanks', 'Sorry'], correct: 0 },
-      { word: 'Buenos días', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-      { word: 'Muchas gracias', options: ['Thank you very much', "You're welcome", 'Excuse me', 'Goodbye'], correct: 0 },
-    ],
-    fr: [
-      { word: 'Bonjour', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-      { word: 'Merci beaucoup', options: ['Thank you very much', "You're welcome", 'Excuse me', 'Goodbye'], correct: 0 },
-    ],
-    de: [
-      { word: 'Guten Morgen', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-      { word: 'Danke schön', options: ['Thank you very much', "You're welcome", 'Excuse me', 'Goodbye'], correct: 0 },
-    ],
-    it: [
-      { word: 'Buongiorno', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-      { word: 'Grazie mille', options: ['Thank you very much', "You're welcome", 'Excuse me', 'Goodbye'], correct: 0 },
-    ],
-    ja: [
-      { word: 'おはようございます', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-    ],
-    pt: [
-      { word: 'Bom dia', options: ['Good morning', 'Good night', 'Goodbye', 'Thanks'], correct: 0 },
-    ],
-    ko: [
-      { word: '안녕하세요', options: ['Hello', 'Goodbye', 'Thanks', 'Sorry'], correct: 0 },
-    ],
-    en: [],
-  },
-  it: {
-    en: [
-      { word: 'Hello', options: ['Ciao', 'Arrivederci', 'Grazie', 'Scusa'], correct: 0 },
-      { word: 'Good morning', options: ['Buongiorno', 'Buonasera', 'Arrivederci', 'Grazie'], correct: 0 },
-      { word: 'Thank you', options: ['Grazie', 'Prego', 'Scusa', 'Ciao'], correct: 0 },
-    ],
-    es: [
-      { word: 'Hola', options: ['Ciao', 'Arrivederci', 'Grazie', 'Scusa'], correct: 0 },
-    ],
-    fr: [
-      { word: 'Bonjour', options: ['Buongiorno', 'Arrivederci', 'Grazie', 'Scusa'], correct: 0 },
-    ],
-    de: [
-      { word: 'Guten Morgen', options: ['Buongiorno', 'Buonasera', 'Arrivederci', 'Grazie'], correct: 0 },
-    ],
-    it: [],
-    ja: [
-      { word: 'おはようございます', options: ['Buongiorno', 'Buonasera', 'Arrivederci', 'Grazie'], correct: 0 },
-    ],
-    pt: [
-      { word: 'Bom dia', options: ['Buongiorno', 'Buonasera', 'Arrivederci', 'Grazie'], correct: 0 },
-    ],
-    ko: [
-      { word: '안녕하세요', options: ['Ciao', 'Arrivederci', 'Grazie', 'Scusa'], correct: 0 },
-    ],
-  },
-};
+  for (let i = 0; i < Math.min(8, shuffled.length); i++) {
+    const word = shuffled[i];
+    const others = usable.filter((_, j) => j !== i).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opts = [word[nl], ...others.map(o => o[nl])];
+    const shuffledOpts = opts.sort(() => Math.random() - 0.5);
+    questions.push({
+      word: word[cl],
+      options: shuffledOpts,
+      correct: shuffledOpts.indexOf(word[nl]),
+    });
+  }
+  return questions;
+}
 
 interface Props {
   onBack: () => void;
@@ -126,7 +46,7 @@ const ListenGame = ({ onBack }: Props) => {
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const questions = listenDataByNative[nativeLang]?.[course] || listenData[course] || listenData.en;
+  const questions = useMemo(() => generateListenQuestions(nativeLang, course), [nativeLang, course]);
   const current = questions[currentIdx];
 
   const speak = useCallback((text: string) => {

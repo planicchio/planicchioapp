@@ -1,59 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { wordBank, type LangCode } from '@/data/wordBank';
 
-const wordPairs: Record<string, { word: string; translation: string }[]> = {
-  en: [
-    { word: 'Hello', translation: 'Hi' },
-    { word: 'Dog', translation: 'Puppy' },
-    { word: 'Cat', translation: 'Kitty' },
-    { word: 'Water', translation: 'H₂O' },
-    { word: 'House', translation: 'Home' },
-    { word: 'Book', translation: 'Novel' },
-  ],
-  es: [
-    { word: 'Hola', translation: 'Hello' },
-    { word: 'Perro', translation: 'Dog' },
-    { word: 'Gato', translation: 'Cat' },
-    { word: 'Agua', translation: 'Water' },
-    { word: 'Casa', translation: 'House' },
-    { word: 'Libro', translation: 'Book' },
-  ],
-  fr: [
-    { word: 'Bonjour', translation: 'Hello' },
-    { word: 'Chien', translation: 'Dog' },
-    { word: 'Chat', translation: 'Cat' },
-    { word: 'Eau', translation: 'Water' },
-    { word: 'Maison', translation: 'House' },
-    { word: 'Livre', translation: 'Book' },
-  ],
-  de: [
-    { word: 'Hallo', translation: 'Hello' },
-    { word: 'Hund', translation: 'Dog' },
-    { word: 'Katze', translation: 'Cat' },
-    { word: 'Wasser', translation: 'Water' },
-    { word: 'Haus', translation: 'House' },
-    { word: 'Buch', translation: 'Book' },
-  ],
-  it: [
-    { word: 'Ciao', translation: 'Hello' },
-    { word: 'Cane', translation: 'Dog' },
-    { word: 'Gatto', translation: 'Cat' },
-    { word: 'Acqua', translation: 'Water' },
-    { word: 'Casa', translation: 'House' },
-    { word: 'Libro', translation: 'Book' },
-  ],
-  ja: [
-    { word: 'こんにちは', translation: 'Hello' },
-    { word: '犬', translation: 'Dog' },
-    { word: '猫', translation: 'Cat' },
-    { word: '水', translation: 'Water' },
-    { word: '家', translation: 'House' },
-    { word: '本', translation: 'Book' },
-  ],
-};
+function getMemoryPairs(nativeLang: string, course: string): { word: string; translation: string }[] {
+  const nl = nativeLang as LangCode;
+  const cl = course as LangCode;
+  const categories = ['food', 'animals', 'colors', 'greetings', 'daily'];
+  const pairs: { word: string; translation: string }[] = [];
+  for (const cat of categories) {
+    const words = wordBank[cat] || [];
+    for (const entry of words) {
+      const courseWord = entry[cl];
+      const nativeWord = entry[nl];
+      if (courseWord && nativeWord && courseWord !== nativeWord) {
+        pairs.push({ word: courseWord, translation: nativeWord });
+      }
+      if (pairs.length >= 8) break;
+    }
+    if (pairs.length >= 8) break;
+  }
+  return pairs.slice(0, 6);
+}
 
 interface Card {
   id: number;
@@ -66,7 +36,7 @@ interface Card {
 const MemoryGame = ({ onBack }: { onBack: () => void }) => {
   const { course, nativeLang, addXp } = useApp();
   const tr = useTranslation(nativeLang);
-  const pairs = wordPairs[course] || wordPairs.en;
+  const pairs = useMemo(() => getMemoryPairs(nativeLang, course), [nativeLang, course]);
 
   const createCards = useCallback((): Card[] => {
     const cards: Card[] = [];

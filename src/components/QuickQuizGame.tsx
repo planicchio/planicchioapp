@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Timer } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { wordBank, type LangCode } from '@/data/wordBank';
 
 interface QuizQ {
   question: string;
@@ -10,56 +11,46 @@ interface QuizQ {
   correct: number;
 }
 
-const quizData: Record<string, QuizQ[]> = {
-  en: [
-    { question: '"Apple" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"Blue" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"Three" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"Sun" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-    { question: '"Fish" = ?', options: ['🐟', '🐶', '🐱', '🐦'], correct: 0 },
-    { question: '"Rain" = ?', options: ['🌧️', '☀️', '❄️', '🌈'], correct: 0 },
-    { question: '"Heart" = ?', options: ['❤️', '⭐', '🔥', '💎'], correct: 0 },
-    { question: '"Car" = ?', options: ['🚗', '🚀', '✈️', '🚂'], correct: 0 },
-  ],
-  es: [
-    { question: '"Manzana" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"Azul" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"Tres" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"Sol" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-    { question: '"Pez" = ?', options: ['🐟', '🐶', '🐱', '🐦'], correct: 0 },
-    { question: '"Lluvia" = ?', options: ['🌧️', '☀️', '❄️', '🌈'], correct: 0 },
-  ],
-  fr: [
-    { question: '"Pomme" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"Bleu" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"Trois" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"Soleil" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-    { question: '"Poisson" = ?', options: ['🐟', '🐶', '🐱', '🐦'], correct: 0 },
-  ],
-  de: [
-    { question: '"Apfel" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"Blau" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"Drei" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"Sonne" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-  ],
-  it: [
-    { question: '"Mela" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"Blu" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"Tre" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"Sole" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-  ],
-  ja: [
-    { question: '"りんご" = ?', options: ['🍎', '🍌', '🍇', '🍊'], correct: 0 },
-    { question: '"青" = ?', options: ['🔵', '🔴', '🟢', '🟡'], correct: 0 },
-    { question: '"三" = ?', options: ['3', '5', '7', '2'], correct: 0 },
-    { question: '"太陽" = ?', options: ['☀️', '🌙', '⭐', '🌧️'], correct: 0 },
-  ],
-};
+function generateQuizQuestions(nativeLang: string, course: string): QuizQ[] {
+  const nl = nativeLang as LangCode;
+  const cl = course as LangCode;
+  const questions: QuizQ[] = [];
+  const allWords = Object.values(wordBank).flat();
+  const usable = allWords.filter(w => w[cl] && w[nl] && w[cl] !== w[nl]);
+  const shuffled = [...usable].sort(() => Math.random() - 0.5);
+
+  for (let i = 0; i < Math.min(10, shuffled.length); i++) {
+    const word = shuffled[i];
+    // If has emoji, use emoji quiz
+    if (word.emoji) {
+      const others = usable.filter((_, j) => j !== i).sort(() => Math.random() - 0.5).slice(0, 3);
+      const opts = [word.emoji, ...others.filter(o => o.emoji).map(o => o.emoji!)].slice(0, 4);
+      if (opts.length < 4) continue;
+      const shuffledOpts = opts.sort(() => Math.random() - 0.5);
+      questions.push({
+        question: `"${word[cl]}" = ?`,
+        options: shuffledOpts,
+        correct: shuffledOpts.indexOf(word.emoji),
+      });
+    } else {
+      // Text translation quiz: course word → native word
+      const others = usable.filter((_, j) => j !== i).sort(() => Math.random() - 0.5).slice(0, 3);
+      const opts = [word[nl], ...others.map(o => o[nl])];
+      const shuffledOpts = opts.sort(() => Math.random() - 0.5);
+      questions.push({
+        question: `"${word[cl]}" = ?`,
+        options: shuffledOpts,
+        correct: shuffledOpts.indexOf(word[nl]),
+      });
+    }
+  }
+  return questions;
+}
 
 const QuickQuizGame = ({ onBack }: { onBack: () => void }) => {
   const { course, nativeLang, addXp } = useApp();
   const tr = useTranslation(nativeLang);
-  const questions = quizData[course] || quizData.en;
+  const questions = useMemo(() => generateQuizQuestions(nativeLang, course), [nativeLang, course]);
 
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -68,7 +59,7 @@ const QuickQuizGame = ({ onBack }: { onBack: () => void }) => {
   const [finished, setFinished] = useState(false);
 
   useEffect(() => {
-    if (finished || selected !== null) return;
+    if (finished || selected !== null || questions.length === 0) return;
     const timer = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
@@ -107,6 +98,18 @@ const QuickQuizGame = ({ onBack }: { onBack: () => void }) => {
       }
     }, 600);
   };
+
+  if (questions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <span className="text-6xl mb-4">⚡</span>
+        <p className="text-muted-foreground font-bold">{tr('coming_soon')}</p>
+        <button onClick={onBack} className="mt-4 bg-primary text-primary-foreground font-bold px-6 py-2 rounded-full">
+          {tr('back')}
+        </button>
+      </div>
+    );
+  }
 
   if (finished) {
     return (
@@ -159,7 +162,7 @@ const QuickQuizGame = ({ onBack }: { onBack: () => void }) => {
               <button
                 key={i}
                 onClick={() => handleAnswer(i)}
-                className={`p-6 rounded-xl border-2 text-center text-3xl font-bold transition-all active:scale-95 ${bg}`}
+                className={`p-6 rounded-xl border-2 text-center text-xl font-bold transition-all active:scale-95 ${bg}`}
               >
                 {opt}
               </button>

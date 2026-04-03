@@ -283,7 +283,7 @@ const ProfileSheet = ({ open, onClose }: Props) => {
                     {DIARY_COLORS.map(c => (
                       <button
                         key={c.id}
-                        onClick={() => setDiaryColor(c.id)}
+                        onClick={() => { setDiaryColor(c.id); localStorage.setItem('planicchio_diary_color', c.id); }}
                         className={`text-lg p-1 rounded-lg transition-all ${diaryColor === c.id ? 'ring-2 ring-primary scale-110' : ''}`}
                       >
                         {c.label}

@@ -14,7 +14,161 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      community_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_name: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      community_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string | null
+          reply_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reply_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reply_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_likes_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: false
+            referencedRelation: "community_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          created_at: string
+          id: string
+          likes_count: number
+          text: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          text: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          text?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
+      community_ranking: {
+        Row: {
+          created_at: string
+          id: string
+          streak: number
+          updated_at: string
+          user_name: string
+          week: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          streak?: number
+          updated_at?: string
+          user_name: string
+          week: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          streak?: number
+          updated_at?: string
+          user_name?: string
+          week?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      community_replies: {
+        Row: {
+          created_at: string
+          id: string
+          likes_count: number
+          post_id: string
+          text: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          post_id: string
+          text: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          post_id?: string
+          text?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

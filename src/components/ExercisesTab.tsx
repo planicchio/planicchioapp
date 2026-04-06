@@ -963,6 +963,25 @@ const ExercisesTab = () => {
     speechSynthesis.speak(utterance);
   }, [course]);
 
+  const getExplanation = (correct: boolean, exercise: typeof current) => {
+    if (!exercise) return '';
+    const correctAnswer = exercise.options[exercise.correct];
+    const explTemplates: Record<string, { right: string; wrong: string }> = {
+      pt: { right: `✅ Correto! "${correctAnswer}" é a resposta certa. Continue assim!`, wrong: `❌ Incorreto. A resposta certa é "${correctAnswer}". Revise este tema para melhorar!` },
+      en: { right: `✅ Correct! "${correctAnswer}" is the right answer. Keep it up!`, wrong: `❌ Incorrect. The right answer is "${correctAnswer}". Review this topic to improve!` },
+      es: { right: `✅ ¡Correcto! "${correctAnswer}" es la respuesta correcta.`, wrong: `❌ Incorrecto. La respuesta correcta es "${correctAnswer}". ¡Revisa este tema!` },
+      fr: { right: `✅ Correct ! "${correctAnswer}" est la bonne réponse.`, wrong: `❌ Incorrect. La bonne réponse est "${correctAnswer}". Révisez ce sujet !` },
+      de: { right: `✅ Richtig! "${correctAnswer}" ist die richtige Antwort.`, wrong: `❌ Falsch. Die richtige Antwort ist "${correctAnswer}". Wiederhole dieses Thema!` },
+      it: { right: `✅ Corretto! "${correctAnswer}" è la risposta giusta.`, wrong: `❌ Sbagliato. La risposta giusta è "${correctAnswer}". Rivedi questo argomento!` },
+      ja: { right: `✅ 正解！"${correctAnswer}"が正しい答えです。`, wrong: `❌ 不正解。正しい答えは"${correctAnswer}"です。復習しましょう！` },
+      ko: { right: `✅ 정답! "${correctAnswer}"이(가) 맞습니다.`, wrong: `❌ 오답. 정답은 "${correctAnswer}"입니다. 복습하세요!` },
+    };
+    const t = explTemplates[nativeLang] || explTemplates.en;
+    return correct ? t.right : t.wrong;
+  };
+
+  const [explanationText, setExplanationText] = useState('');
+
   const handleAnswer = (idx: number) => {
     if (selected !== null) return;
     setSelected(idx);
@@ -970,6 +989,7 @@ const ExercisesTab = () => {
     const correct = idx === current.correct;
     if (correct) setScore(s => s + 1);
     completeExercise(correct);
+    setExplanationText(getExplanation(correct, current));
 
     setTimeout(() => {
       if (currentIdx < exercises.length - 1) {
@@ -978,10 +998,11 @@ const ExercisesTab = () => {
         setShowFeedback(false);
         setWriteAnswer('');
         setWriteResult(null);
+        setExplanationText('');
       } else {
         setFinished(true);
       }
-    }, 1000);
+    }, 2500);
   };
 
   const handleWriteSubmit = () => {

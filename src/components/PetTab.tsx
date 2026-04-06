@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Utensils, Gamepad2, Lock, MessageCircle, Gift } from 'lucide-react';
+import { Heart, Utensils, Gamepad2, Lock, MessageCircle, Gift, Moon, Sun } from 'lucide-react';
 import { useApp, PETS } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
-import { getFeedWords, getPlayWords, wordBank, type LangCode } from '@/data/wordBank';
+import { getFeedWords, getPlayWords } from '@/data/wordBank';
 
 const petStages = [
   { minLevel: 1, label: 'baby', emoji: '🥚', size: 'text-6xl' },
@@ -23,6 +23,22 @@ const stageLabels: Record<string, Record<string, string>> = {
 
 const foodEmojis = ['🍖', '🍕', '🍎', '🥕', '🐟', '🍰', '🥛', '🍗'];
 
+const sleepTexts: Record<string, string> = {
+  pt: 'Colocar para dormir 💤', en: 'Put to sleep 💤', es: 'Poner a dormir 💤',
+  fr: 'Mettre au lit 💤', de: 'Schlafen legen 💤', it: 'Mettere a dormire 💤',
+  ja: '寝かせる 💤', ko: '재우기 💤',
+};
+const wakeTexts: Record<string, string> = {
+  pt: 'Acordar! ☀️', en: 'Wake up! ☀️', es: '¡Despertar! ☀️',
+  fr: 'Réveiller ! ☀️', de: 'Aufwachen! ☀️', it: 'Svegliare! ☀️',
+  ja: '起こす！☀️', ko: '깨우기! ☀️',
+};
+const sleepingTexts: Record<string, string> = {
+  pt: 'Zzz... dormindo...', en: 'Zzz... sleeping...', es: 'Zzz... durmiendo...',
+  fr: 'Zzz... dort...', de: 'Zzz... schläft...', it: 'Zzz... dorme...',
+  ja: 'Zzz... 寝ています...', ko: 'Zzz... 자고 있어요...',
+};
+
 const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
 
 const PetTab = () => {
@@ -33,24 +49,20 @@ const PetTab = () => {
   const tr = useTranslation(nativeLang);
   const petLevel = getPetLevel();
 
-  // Feed mini-game state
   const [feedMode, setFeedMode] = useState(false);
   const [feedInput, setFeedInput] = useState('');
   const [feedChallenge, setFeedChallenge] = useState<{ word: string; translation: string } | null>(null);
   const [feedResult, setFeedResult] = useState<'correct' | 'wrong' | null>(null);
 
-  // Play mini-game state
   const [playMode, setPlayMode] = useState(false);
   const [playChallenge, setPlayChallenge] = useState<{ word: string; options: string[]; correct: number } | null>(null);
   const [playSelected, setPlaySelected] = useState<number | null>(null);
 
-  // Drag food state
   const [earnedFood, setEarnedFood] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('planicchio_pet_food') || '[]'); } catch { return []; }
   });
-  const [draggingFood, setDraggingFood] = useState<string | null>(null);
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [showFeedAnim, setShowFeedAnim] = useState(false);
+  const [isSleeping, setIsSleeping] = useState(false);
   const petRef = useRef<HTMLDivElement>(null);
 
   const petEmoji = getPetEmoji();
@@ -62,7 +74,7 @@ const PetTab = () => {
   }
 
   const stageLabel = stageLabels[currentStage.label]?.[nativeLang] || stageLabels[currentStage.label]?.en || currentStage.label;
-  const moodText = petMood === 'happy' ? '😊' : petMood === 'sad' ? '😢' : petMood === 'dancing' ? '💃' : '😊';
+  const moodText = isSleeping ? '😴' : petMood === 'happy' ? '😊' : petMood === 'sad' ? '😢' : petMood === 'dancing' ? '💃' : '😊';
 
   const feedWordsList = useMemo(() => getFeedWords(nativeLang, course), [nativeLang, course]);
   const playWordsList = useMemo(() => getPlayWords(course), [course]);
@@ -73,7 +85,7 @@ const PetTab = () => {
   };
 
   const startFeed = () => {
-    if (feedWordsList.length === 0) return;
+    if (isSleeping || feedWordsList.length === 0) return;
     const w = feedWordsList[Math.floor(Math.random() * feedWordsList.length)];
     setFeedChallenge(w);
     setFeedInput('');
@@ -87,7 +99,6 @@ const PetTab = () => {
     setFeedResult(correct ? 'correct' : 'wrong');
     if (correct) {
       feedPet();
-      // Earn a random food emoji
       const newFood = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
       saveFood([...earnedFood, newFood]);
     }
@@ -95,7 +106,7 @@ const PetTab = () => {
   };
 
   const startPlay = () => {
-    if (playWordsList.length === 0) return;
+    if (isSleeping || playWordsList.length === 0) return;
     const w = playWordsList[Math.floor(Math.random() * playWordsList.length)];
     const opts = [...w.options];
     const correctAns = opts[w.correct];
@@ -108,23 +119,22 @@ const PetTab = () => {
   const submitPlay = (idx: number) => {
     if (playSelected !== null || !playChallenge) return;
     setPlaySelected(idx);
-    if (idx === playChallenge.correct) {
-      playWithPet();
-    }
+    if (idx === playChallenge.correct) playWithPet();
     setTimeout(() => { setPlayMode(false); setPlaySelected(null); }, 1500);
   };
 
-  const handleDragFood = (food: string, idx: number) => {
-    setDraggingFood(food);
-  };
-
   const handleDropOnPet = (foodIdx: number) => {
+    if (isSleeping) return;
     feedPet();
     setShowFeedAnim(true);
     const newFoods = [...earnedFood];
     newFoods.splice(foodIdx, 1);
     saveFood(newFoods);
     setTimeout(() => setShowFeedAnim(false), 1000);
+  };
+
+  const toggleSleep = () => {
+    setIsSleeping(!isSleeping);
   };
 
   return (
@@ -134,29 +144,36 @@ const PetTab = () => {
       </div>
 
       {/* Pet Display */}
-      <div ref={petRef} className="bg-card rounded-2xl p-6 border border-border text-center relative overflow-hidden">
+      <div ref={petRef} className={`bg-card rounded-2xl p-6 border border-border text-center relative overflow-hidden ${isSleeping ? 'opacity-80' : ''}`}>
+        {isSleeping && <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/20 to-indigo-950/30 z-10 rounded-2xl" />}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
-        <div className="relative">
+        <div className="relative z-20">
           {currentStage.minLevel >= 10 && (
             <motion.span className="text-3xl absolute -top-2 left-1/2 -translate-x-1/2"
               animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>👑</motion.span>
           )}
           <motion.div className={`${currentStage.size} mb-3 inline-block`}
-            animate={{
+            animate={isSleeping ? { rotate: [0, -5, 0] } : {
               y: [0, -10, 0],
               rotate: petMood === 'dancing' ? [0, 5, -5, 0] : 0,
               scale: showFeedAnim ? [1, 1.2, 1] : 1,
             }}
-            transition={{ duration: 2, repeat: Infinity }}>
+            transition={{ duration: isSleeping ? 3 : 2, repeat: Infinity }}>
             {petLevel < 2 ? '🥚' : petEmoji}
           </motion.div>
           {showFeedAnim && (
             <motion.span className="absolute text-4xl" initial={{ opacity: 1, y: 0 }} animate={{ opacity: 0, y: -40 }}
               transition={{ duration: 1 }}>😋</motion.span>
           )}
+          {isSleeping && (
+            <motion.div className="absolute top-2 right-4 text-3xl"
+              animate={{ opacity: [0.3, 1, 0.3], y: [0, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+              💤
+            </motion.div>
+          )}
           <h3 className="text-xl font-black text-foreground">{petName}</h3>
           <p className="text-sm text-muted-foreground">
-            {tr('level') || 'Level'} {petLevel} · {stageLabel} {moodText}
+            {isSleeping ? (sleepingTexts[nativeLang] || sleepingTexts.en) : `${tr('level') || 'Level'} ${petLevel} · ${stageLabel} ${moodText}`}
           </p>
           <div className="mt-2 inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
             {xp} XP
@@ -164,8 +181,8 @@ const PetTab = () => {
         </div>
       </div>
 
-      {/* Food Inventory - Drag to Pet */}
-      {earnedFood.length > 0 && (
+      {/* Food Inventory */}
+      {earnedFood.length > 0 && !isSleeping && (
         <div className="bg-card rounded-2xl p-4 border border-border">
           <h3 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
             <Gift size={16} className="text-primary" />
@@ -174,12 +191,8 @@ const PetTab = () => {
           <p className="text-[10px] text-muted-foreground mb-2">{tr('tap_food_to_feed') || 'Toque na comida para alimentar!'}</p>
           <div className="flex flex-wrap gap-2">
             {earnedFood.map((food, i) => (
-              <motion.button
-                key={i}
-                whileTap={{ scale: 0.8 }}
-                onClick={() => handleDropOnPet(i)}
-                className="text-3xl p-2 bg-muted rounded-xl hover:bg-primary/10 transition-colors cursor-pointer active:scale-90"
-              >
+              <motion.button key={i} whileTap={{ scale: 0.8 }} onClick={() => handleDropOnPet(i)}
+                className="text-3xl p-2 bg-muted rounded-xl hover:bg-primary/10 transition-colors cursor-pointer active:scale-90">
                 {food}
               </motion.button>
             ))}
@@ -222,12 +235,8 @@ const PetTab = () => {
               feedResult === 'wrong' ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-border'
             }`}
             disabled={feedResult !== null} autoFocus />
-          {feedResult === 'wrong' && (
-            <p className="text-xs text-red-500 font-bold mt-2">✗ {feedChallenge.word}</p>
-          )}
-          {feedResult === 'correct' && (
-            <p className="text-xs text-green-500 font-bold mt-2">✓ +🍖 {tr('food_earned') || 'Comida ganha!'}</p>
-          )}
+          {feedResult === 'wrong' && <p className="text-xs text-red-500 font-bold mt-2">✗ {feedChallenge.word}</p>}
+          {feedResult === 'correct' && <p className="text-xs text-green-500 font-bold mt-2">✓ +🍖 {tr('food_earned') || 'Comida ganha!'}</p>}
           {feedResult === null && (
             <button onClick={submitFeed} className="w-full mt-3 bg-primary text-primary-foreground font-bold py-2 rounded-xl active:scale-95 transition-transform">
               {tr('confirm') || 'Confirm'}
@@ -262,18 +271,21 @@ const PetTab = () => {
 
       {/* Action Buttons */}
       {!feedMode && !playMode && (
-        <div className="grid grid-cols-2 gap-3">
-          <button onClick={startFeed}
-            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={startFeed} disabled={isSleeping}
+            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50 disabled:opacity-40">
             <Utensils size={24} className="text-primary" />
             <span className="font-bold text-sm text-foreground">{tr('feed') || 'Feed'}</span>
-            <span className="text-[10px] text-muted-foreground">+🍖</span>
           </button>
-          <button onClick={startPlay}
-            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
+          <button onClick={startPlay} disabled={isSleeping}
+            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50 disabled:opacity-40">
             <Gamepad2 size={24} className="text-primary" />
             <span className="font-bold text-sm text-foreground">{tr('play') || 'Play'}</span>
-            <span className="text-[10px] text-muted-foreground">+⚡</span>
+          </button>
+          <button onClick={toggleSleep}
+            className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 transition-all active:scale-95 hover:shadow-md hover:border-primary/50">
+            {isSleeping ? <Sun size={24} className="text-amber-500" /> : <Moon size={24} className="text-indigo-500" />}
+            <span className="font-bold text-xs text-foreground">{isSleeping ? (wakeTexts[nativeLang] || wakeTexts.en) : (sleepTexts[nativeLang] || sleepTexts.en)}</span>
           </button>
         </div>
       )}
@@ -294,9 +306,7 @@ const PetTab = () => {
                 <span className="text-2xl">{stage.minLevel < 2 ? '🥚' : petEmoji}</span>
                 <div className="flex-1">
                   <p className="font-bold text-sm text-foreground">{label}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {tr('level') || 'Level'} {stage.minLevel}+ ({stage.minLevel * 200} XP)
-                  </p>
+                  <p className="text-[10px] text-muted-foreground">{tr('level') || 'Level'} {stage.minLevel}+ ({stage.minLevel * 200} XP)</p>
                 </div>
                 {isActive && <span className="text-green-500">✅</span>}
               </div>

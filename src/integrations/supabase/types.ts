@@ -79,6 +79,8 @@ export type Database = {
           created_at: string
           id: string
           likes_count: number
+          repost_of: string | null
+          reposts_count: number
           text: string
           user_id: string | null
           user_name: string
@@ -87,6 +89,8 @@ export type Database = {
           created_at?: string
           id?: string
           likes_count?: number
+          repost_of?: string | null
+          reposts_count?: number
           text: string
           user_id?: string | null
           user_name: string
@@ -95,11 +99,21 @@ export type Database = {
           created_at?: string
           id?: string
           likes_count?: number
+          repost_of?: string | null
+          reposts_count?: number
           text?: string
           user_id?: string | null
           user_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_repost_of_fkey"
+            columns: ["repost_of"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_ranking: {
         Row: {
@@ -168,6 +182,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_emoji: string | null
+          bio: string | null
+          country: string | null
+          created_at: string
+          id: string
+          interests: string[] | null
+          updated_at: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          avatar_emoji?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Update: {
+          avatar_emoji?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
       }
     }
     Views: {

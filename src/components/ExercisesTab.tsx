@@ -1244,6 +1244,17 @@ const ExercisesTab = () => {
                   );
                 })}
               </div>
+              {/* Explanation feedback */}
+              {showFeedback && explanationText && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  className={`mt-4 p-4 rounded-xl border-2 ${
+                    selected === current.correct
+                      ? 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-600'
+                      : 'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-600'
+                  }`}>
+                  <p className="text-sm font-bold text-foreground">{explanationText}</p>
+                </motion.div>
+              )}
             </>
           )}
         </motion.div>

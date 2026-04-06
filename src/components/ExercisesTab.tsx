@@ -981,8 +981,6 @@ const ExercisesTab = () => {
     return correct ? t.right : t.wrong;
   };
 
-  const [explanationText, setExplanationText] = useState('');
-
   const handleAnswer = (idx: number) => {
     if (selected !== null) return;
     setSelected(idx);

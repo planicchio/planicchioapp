@@ -938,6 +938,7 @@ const ExercisesTab = () => {
   const [finished, setFinished] = useState(false);
   const [writeAnswer, setWriteAnswer] = useState('');
   const [writeResult, setWriteResult] = useState<'correct' | 'wrong' | null>(null);
+  const [explanationText, setExplanationText] = useState('');
 
   const rawExercises = useMemo(() => {
     if (!selectedCat) return [];

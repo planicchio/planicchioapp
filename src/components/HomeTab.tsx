@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp, COURSES } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
-import { Flame, Trophy, Star, Gamepad2, Brain, Zap, Search, Ear } from 'lucide-react';
+import { Flame, Trophy, Star, Gamepad2, Brain, Zap, Search, Ear, CalendarDays } from 'lucide-react';
 import MemoryGame from './MemoryGame';
 import QuickQuizGame from './QuickQuizGame';
 import WordHuntGame from './WordHuntGame';
 import ListenGame from './ListenGame';
+import { generateExercises } from '@/data/wordBank';
 
 const HomeTab = () => {
   const { name, streak, xp, level, course, nativeLang, getTitle, dailyMissions, weeklyMissions, setActiveTab } = useApp();
@@ -13,6 +14,16 @@ const HomeTab = () => {
   const title = getTitle();
   const courseName = COURSES.find(c => c.id === course)?.name || 'Idioma';
   const [activeMinigame, setActiveMinigame] = useState<string | null>(null);
+
+  // Weekly challenge: pick a random category based on week number
+  const weeklyChallenge = useMemo(() => {
+    const cats = ['greetings', 'food', 'travel', 'work', 'daily', 'numbers', 'animals', 'colors'];
+    const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+    const cat = cats[weekNum % cats.length];
+    const catEmojis: Record<string, string> = { greetings: '👋', food: '🍕', travel: '✈️', work: '💼', daily: '🏠', numbers: '🔢', animals: '🐾', colors: '🎨' };
+    const catKeys: Record<string, string> = { greetings: 'cat_greetings', food: 'cat_food', travel: 'cat_travel', work: 'cat_work', daily: 'cat_daily', numbers: 'cat_numbers', animals: 'cat_animals', colors: 'cat_colors' };
+    return { category: cat, emoji: catEmojis[cat] || '📚', nameKey: catKeys[cat] || cat };
+  }, []);
 
   const minigames = [
     { id: 'memory', name: tr('memory_game'), emoji: '🃏', desc: tr('memory_desc'), icon: Brain },
@@ -99,6 +110,25 @@ const HomeTab = () => {
               <span className="text-xs font-bold text-primary ml-3">+{m.xpReward} XP</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Weekly Challenge */}
+      <div className="bg-card rounded-2xl p-4 shadow-sm border-2 border-primary/30">
+        <div className="flex items-center gap-2 mb-2">
+          <CalendarDays size={18} className="text-primary" />
+          <h3 className="font-black text-foreground">{tr('weekly_challenge') || 'Desafio Semanal'}</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-4xl">{weeklyChallenge.emoji}</span>
+          <div className="flex-1">
+            <p className="font-bold text-sm text-foreground">{tr(weeklyChallenge.nameKey)}</p>
+            <p className="text-xs text-muted-foreground">{tr('weekly_challenge_desc') || 'Pratique a categoria da semana!'}</p>
+          </div>
+          <button onClick={() => setActiveTab('exercises')}
+            className="bg-primary text-primary-foreground font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-transform">
+            {tr('start') || 'Ir'} →
+          </button>
         </div>
       </div>
 

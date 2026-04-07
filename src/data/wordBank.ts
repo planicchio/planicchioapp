@@ -175,8 +175,17 @@ export interface GeneratedExercise {
 export function generateExercises(nativeLang: string, courseLang: string, category: string): GeneratedExercise[] {
   const nl = nativeLang as LangCode;
   const cl = courseLang as LangCode;
-  const words = wordBank[category];
-  if (!words || nl === cl) return [];
+  
+  // Merge base + extended word banks
+  let baseWords = wordBank[category] || [];
+  try {
+    // Dynamic import of extended words - merged at runtime
+    const ext = (window as any).__extendedWordBank?.[category];
+    if (ext) baseWords = [...baseWords, ...ext];
+  } catch {}
+  
+  const words = baseWords;
+  if (!words || words.length === 0 || nl === cl) return [];
 
   const courseLangName = langNames[nl]?.[cl] || courseLang;
   const howToSayTemplate = questionTemplates.howToSay[nl] || questionTemplates.howToSay.en;

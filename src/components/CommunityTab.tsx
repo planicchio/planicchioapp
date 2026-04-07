@@ -165,14 +165,29 @@ const CommunityTab = () => {
   useEffect(() => { loadRanking(); }, [loadRanking]);
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
-  // Upsert ranking for current user
+  // Upsert ranking for current user using user_name+week as conflict
   useEffect(() => {
     if (!name) return;
     const currentWeek = getCurrentWeek();
-    supabase.from('community_ranking').upsert(
-      { user_name: `${name} ⭐`, xp, streak, week: currentWeek },
-      { onConflict: 'id' }
-    ).then(() => loadRanking());
+    const upsertRanking = async () => {
+      // Check if entry exists
+      const { data: existing } = await supabase.from('community_ranking')
+        .select('id')
+        .eq('user_name', `${name} ⭐`)
+        .eq('week', currentWeek)
+        .maybeSingle();
+      
+      if (existing) {
+        await supabase.from('community_ranking')
+          .update({ xp, streak, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase.from('community_ranking')
+          .insert({ user_name: `${name} ⭐`, xp, streak, week: currentWeek });
+      }
+      loadRanking();
+    };
+    upsertRanking();
   }, [xp, streak, name]);
 
   // Realtime subscription

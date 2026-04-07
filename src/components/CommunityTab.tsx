@@ -57,7 +57,7 @@ function timeAgo(dateStr: string, tr: (k: string) => string): string {
 }
 
 const CommunityTab = () => {
-  const { name, nativeLang, xp, streak } = useApp();
+  const { name, nativeLang, xp, streak, getPetEmoji } = useApp();
   const tr = useTranslation(nativeLang);
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -201,8 +201,9 @@ const CommunityTab = () => {
 
   const handleSend = async () => {
     if (!newComment.trim()) return;
+    const petEmoji = getPetEmoji();
     await supabase.from('community_posts').insert({
-      user_name: `${name} 🌍`, text: newComment, user_id: userId,
+      user_name: `${name} ${petEmoji}`, text: newComment, user_id: userId,
     });
     setNewComment('');
     loadPosts();
@@ -210,8 +211,9 @@ const CommunityTab = () => {
 
   const handleReply = async (postId: string) => {
     if (!replyText.trim()) return;
+    const petEmoji = getPetEmoji();
     await supabase.from('community_replies').insert({
-      post_id: postId, user_name: `${name} 🌍`, text: replyText, user_id: userId,
+      post_id: postId, user_name: `${name} ${petEmoji}`, text: replyText, user_id: userId,
     });
     setReplyText('');
     setReplyingTo(null);

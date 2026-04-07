@@ -247,8 +247,9 @@ const CommunityTab = () => {
   };
 
   const handleRepost = async (post: Post) => {
+    const petEmoji = getPetEmoji();
     await supabase.from('community_posts').insert({
-      user_name: `${name} 🌍`, text: `🔁 ${post.user_name}: "${post.text}"`,
+      user_name: `${name} ${petEmoji}`, text: `🔁 ${post.user_name}: "${post.text}"`,
       user_id: userId, repost_of: post.id,
     });
     loadPosts();

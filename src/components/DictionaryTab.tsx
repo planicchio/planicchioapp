@@ -1,281 +1,118 @@
-import { useState } from 'react';
-import { Search, Lock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, Lock, Volume2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { wordBank, type LangCode } from '@/data/wordBank';
+import { extendedWordBank } from '@/data/wordBankExtended';
 
-// Dictionary: word in target language -> translation in native language
-const dictionaryData: Record<string, Record<string, { word: string; translation: string; pronunciation?: string }[]>> = {
-  pt: {
+// Dynamically build dictionary from wordBank for ALL language combos
+function buildDictionary(nativeLang: string, course: string): { word: string; translation: string; meaning?: string; pronunciation?: string }[] {
+  const nl = nativeLang as LangCode;
+  const cl = course as LangCode;
+  if (nl === cl) return [];
+
+  const results: { word: string; translation: string; meaning?: string }[] = [];
+  const allCategories = Object.keys(wordBank);
+
+  for (const cat of allCategories) {
+    const baseWords = wordBank[cat] || [];
+    const extWords = extendedWordBank[cat] || [];
+    const allWords = [...baseWords, ...extWords];
+
+    for (const entry of allWords) {
+      const courseWord = entry[cl];
+      const nativeWord = entry[nl];
+      if (courseWord && nativeWord && courseWord !== nativeWord) {
+        results.push({
+          word: courseWord,
+          translation: nativeWord,
+          meaning: entry.emoji ? `${entry.emoji} ${nativeWord}` : undefined,
+        });
+      }
+    }
+  }
+  // Remove duplicates
+  const seen = new Set<string>();
+  return results.filter(r => {
+    if (seen.has(r.word)) return false;
+    seen.add(r.word);
+    return true;
+  });
+}
+
+// Slang with translations adapted per native language
+function getSlangData(course: string, nativeLang: string): { word: string; translation: string; meaning: string }[] {
+  const slangByLang: Record<string, { word: string; meanings: Record<string, string> }[]> = {
     en: [
-      { word: 'Hello', translation: 'Olá', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'Tchau', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'Obrigado', pronunciation: '/θæŋk juː/' },
-      { word: 'Please', translation: 'Por favor', pronunciation: '/pliːz/' },
-      { word: 'Water', translation: 'Água', pronunciation: '/ˈwɔːtər/' },
-      { word: 'Food', translation: 'Comida', pronunciation: '/fuːd/' },
-      { word: 'House', translation: 'Casa', pronunciation: '/haʊs/' },
-      { word: 'Love', translation: 'Amor', pronunciation: '/lʌv/' },
-      { word: 'Friend', translation: 'Amigo', pronunciation: '/frɛnd/' },
-      { word: 'Family', translation: 'Família', pronunciation: '/ˈfæmɪli/' },
-      { word: 'Work', translation: 'Trabalho', pronunciation: '/wɜːrk/' },
-      { word: 'School', translation: 'Escola', pronunciation: '/skuːl/' },
-      { word: 'Beautiful', translation: 'Bonito', pronunciation: '/ˈbjuːtɪfəl/' },
-      { word: 'Happy', translation: 'Feliz', pronunciation: '/ˈhæpi/' },
-      { word: 'Good morning', translation: 'Bom dia', pronunciation: '/ɡʊd ˈmɔːrnɪŋ/' },
+      { word: 'LOL', meanings: { pt: 'Rindo muito alto', en: 'Laughing Out Loud', es: 'Riendo a carcajadas', fr: 'Mourir de rire', de: 'Laut lachen', it: 'Ridere forte', ja: '大爆笑', ko: '크게 웃음' } },
+      { word: 'BRB', meanings: { pt: 'Já volto', en: 'Be Right Back', es: 'Ya vuelvo', fr: 'Je reviens', de: 'Bin gleich zurück', it: 'Torno subito', ja: 'すぐ戻る', ko: '금방 올게' } },
+      { word: 'GOAT', meanings: { pt: 'O melhor de todos os tempos', en: 'Greatest Of All Time', es: 'El mejor de todos los tiempos', fr: 'Le meilleur de tous les temps', de: 'Der Beste aller Zeiten', it: 'Il migliore di sempre', ja: '史上最高', ko: '역대 최고' } },
+      { word: 'NGL', meanings: { pt: 'Sem mentira', en: 'Not Gonna Lie', es: 'Sin mentir', fr: 'Sans mentir', de: 'Nicht gelogen', it: 'Senza mentire', ja: '嘘じゃなく', ko: '솔직히 말하면' } },
+      { word: 'Slay', meanings: { pt: 'Arrasar / Fazer muito bem', en: 'To do something exceptionally well', es: 'Hacerlo increíble', fr: 'Tout déchirer', de: 'Etwas großartig machen', it: 'Spaccare', ja: 'めちゃくちゃうまい', ko: '완벽하게 해내다' } },
+      { word: 'No cap', meanings: { pt: 'Sem mentira / Verdade', en: 'No lie / For real', es: 'Sin mentira / En serio', fr: 'Sans mentir / Pour de vrai', de: 'Kein Witz / Echt', it: 'Senza bugie / Davvero', ja: 'マジで', ko: '진짜로' } },
+      { word: 'Vibe check', meanings: { pt: 'Verificar o clima/energia', en: 'Assessing the mood', es: 'Verificar la vibra', fr: 'Vérifier l\'ambiance', de: 'Stimmung checken', it: 'Controllare l\'atmosfera', ja: '雰囲気チェック', ko: '분위기 파악' } },
+      { word: 'IYKYK', meanings: { pt: 'Se você sabe, você sabe', en: 'If You Know You Know', es: 'Si sabes, sabes', fr: 'Si tu sais, tu sais', de: 'Wer weiß, weiß', it: 'Se sai, sai', ja: '分かる人には分かる', ko: '아는 사람은 아는' } },
     ],
-    // ... keep existing code (es, fr, de, it, ja entries for pt)
     es: [
-      { word: 'Hola', translation: 'Olá' }, { word: 'Adiós', translation: 'Tchau' },
-      { word: 'Gracias', translation: 'Obrigado' }, { word: 'Agua', translation: 'Água' },
-      { word: 'Comida', translation: 'Comida' }, { word: 'Casa', translation: 'Casa' },
-      { word: 'Amor', translation: 'Amor' }, { word: 'Amigo', translation: 'Amigo' },
-      { word: 'Trabajo', translation: 'Trabalho' }, { word: 'Escuela', translation: 'Escola' },
+      { word: 'Jajaja', meanings: { pt: 'Hahaha (risada)', en: 'Hahaha (laughter)', es: 'Hahaha', fr: 'Hahaha (rire)', de: 'Hahaha (Lachen)', it: 'Hahaha (risata)', ja: 'ハハハ（笑い）', ko: 'ㅋㅋㅋ (웃음)' } },
+      { word: 'TQM', meanings: { pt: 'Te amo muito', en: 'I love you so much', es: 'Te Quiero Mucho', fr: 'Je t\'aime beaucoup', de: 'Ich hab dich sehr lieb', it: 'Ti voglio bene', ja: '大好き', ko: '너무 사랑해' } },
+      { word: 'Mola', meanings: { pt: 'Legal / Maneiro', en: 'Cool / Nice', es: 'Cool / Genial', fr: 'Cool / Chouette', de: 'Cool / Toll', it: 'Figo / Bello', ja: 'かっこいい', ko: '멋져' } },
+      { word: 'Flipar', meanings: { pt: 'Ficar surpreso / Pirar', en: 'To freak out / Be amazed', es: 'Quedarse alucinado', fr: 'Halluciner', de: 'Ausflippen', it: 'Impazzire', ja: 'びっくりする', ko: '깜짝 놀라다' } },
     ],
     fr: [
-      { word: 'Bonjour', translation: 'Olá' }, { word: 'Au revoir', translation: 'Tchau' },
-      { word: 'Merci', translation: 'Obrigado' }, { word: 'Eau', translation: 'Água' },
-      { word: 'Nourriture', translation: 'Comida' }, { word: 'Maison', translation: 'Casa' },
+      { word: 'MDR', meanings: { pt: 'Morrendo de rir', en: 'Dying of laughter (LOL)', es: 'Muerto de risa', fr: 'Mort De Rire', de: 'Totgelacht', it: 'Morto dal ridere', ja: '爆笑', ko: '웃겨 죽겠다' } },
+      { word: 'OKLM', meanings: { pt: 'De boa / Relaxando', en: 'Chilling / Relaxing', es: 'Relajado', fr: 'Au calme', de: 'Ganz entspannt', it: 'Rilassato', ja: 'のんびり', ko: '편하게' } },
+      { word: 'Sah', meanings: { pt: 'Sério / Verdade', en: 'Seriously / For real', es: 'En serio', fr: 'Sérieusement', de: 'Ernsthaft', it: 'Sul serio', ja: 'マジで', ko: '진심으로' } },
+      { word: 'Bail', meanings: { pt: 'Coisa / Negócio', en: 'Thing / Stuff', es: 'Cosa / Asunto', fr: 'Truc / Chose', de: 'Ding / Sache', it: 'Cosa / Roba', ja: '物事', ko: '것' } },
     ],
     de: [
-      { word: 'Hallo', translation: 'Olá' }, { word: 'Tschüss', translation: 'Tchau' },
-      { word: 'Danke', translation: 'Obrigado' }, { word: 'Wasser', translation: 'Água' },
-      { word: 'Essen', translation: 'Comida' }, { word: 'Haus', translation: 'Casa' },
+      { word: 'Digga', meanings: { pt: 'Mano / Cara', en: 'Dude / Bro', es: 'Tío / Colega', fr: 'Mec / Pote', de: 'Kumpel', it: 'Tipo / Amico', ja: 'おい / やぁ', ko: '야' } },
+      { word: 'Krass', meanings: { pt: 'Insano / Demais', en: 'Crazy / Intense', es: 'Loco / Intenso', fr: 'Dingue / Ouf', de: 'Verrückt / Heftig', it: 'Pazzesco', ja: 'ヤバい', ko: '대박' } },
+      { word: 'Alter', meanings: { pt: 'Cara! (exclamação)', en: 'Dude! (exclamation)', es: '¡Tío!', fr: 'Mec !', de: 'Alter!', it: 'Cavolo!', ja: 'うわ！', ko: '야!' } },
+      { word: 'Chillen', meanings: { pt: 'Relaxar / Curtir', en: 'To chill / Relax', es: 'Relajarse', fr: 'Se détendre', de: 'Entspannen', it: 'Rilassarsi', ja: 'のんびりする', ko: '쉬다' } },
     ],
     it: [
-      { word: 'Ciao', translation: 'Olá' }, { word: 'Arrivederci', translation: 'Tchau' },
-      { word: 'Grazie', translation: 'Obrigado' }, { word: 'Acqua', translation: 'Água' },
-      { word: 'Cibo', translation: 'Comida' }, { word: 'Casa', translation: 'Casa' },
+      { word: 'Boh', meanings: { pt: 'Sei lá', en: "I don't know", es: 'No sé', fr: 'Je sais pas', de: 'Keine Ahnung', it: 'Non lo so', ja: 'さあ', ko: '모르겠어' } },
+      { word: 'Figo/a', meanings: { pt: 'Legal / Bonito', en: 'Cool / Hot', es: 'Genial / Guapo', fr: 'Cool / Beau', de: 'Cool / Heiß', it: 'Figo', ja: 'かっこいい', ko: '멋진' } },
+      { word: 'Che figata', meanings: { pt: 'Que demais!', en: 'How cool!', es: '¡Qué genial!', fr: 'Trop cool !', de: 'Wie geil!', it: 'Che figata!', ja: 'すごい！', ko: '대단해!' } },
+      { word: 'Sgamare', meanings: { pt: 'Ser pego / Flagrado', en: 'To get caught', es: 'Ser pillado', fr: 'Se faire choper', de: 'Erwischt werden', it: 'Farsi beccare', ja: '見つかる', ko: '들키다' } },
     ],
     ja: [
-      { word: 'こんにちは', translation: 'Olá' }, { word: 'さようなら', translation: 'Tchau' },
-      { word: 'ありがとう', translation: 'Obrigado' }, { word: '水 (mizu)', translation: 'Água' },
+      { word: 'www', meanings: { pt: 'Hahaha (de warau=rir)', en: 'LOL (from warau=laugh)', es: 'Jajaja', fr: 'MDR', de: 'Hahaha', it: 'Hahaha', ja: '笑い（わらう）', ko: 'ㅋㅋㅋ' } },
+      { word: 'ヤバい', meanings: { pt: 'Incrível / Louco', en: 'Crazy / Amazing', es: 'Loco / Increíble', fr: 'Dingue / Incroyable', de: 'Krass / Wahnsinn', it: 'Pazzesco', ja: 'すごい / 危ない', ko: '대박 / 미쳤다' } },
+      { word: 'マジ', meanings: { pt: 'Sério / De verdade', en: 'Seriously / For real', es: 'En serio', fr: 'Sérieusement', de: 'Ernsthaft', it: 'Sul serio', ja: '本当に', ko: '진짜' } },
+      { word: 'ウケる', meanings: { pt: 'Muito engraçado', en: 'Hilarious', es: 'Muy gracioso', fr: 'Trop drôle', de: 'Zu lustig', it: 'Troppo divertente', ja: 'めっちゃ面白い', ko: '웃겨' } },
     ],
     ko: [
-      { word: '안녕하세요', translation: 'Olá' }, { word: '감사합니다', translation: 'Obrigado' },
-      { word: '물 (mul)', translation: 'Água' }, { word: '집 (jip)', translation: 'Casa' },
-    ],
-    pt: [],
-  },
-  en: {
-    es: [
-      { word: 'Hola', translation: 'Hello' }, { word: 'Adiós', translation: 'Goodbye' },
-      { word: 'Gracias', translation: 'Thank you' }, { word: 'Agua', translation: 'Water' },
-      { word: 'Comida', translation: 'Food' }, { word: 'Casa', translation: 'House' },
-      { word: 'Amor', translation: 'Love' }, { word: 'Amigo', translation: 'Friend' },
-    ],
-    fr: [
-      { word: 'Bonjour', translation: 'Hello' }, { word: 'Au revoir', translation: 'Goodbye' },
-      { word: 'Merci', translation: 'Thank you' }, { word: 'Eau', translation: 'Water' },
-      { word: 'Maison', translation: 'House' }, { word: 'Amour', translation: 'Love' },
-    ],
-    de: [
-      { word: 'Hallo', translation: 'Hello' }, { word: 'Tschüss', translation: 'Goodbye' },
-      { word: 'Danke', translation: 'Thank you' }, { word: 'Wasser', translation: 'Water' },
-      { word: 'Haus', translation: 'House' }, { word: 'Essen', translation: 'Food' },
-    ],
-    it: [
-      { word: 'Ciao', translation: 'Hello' }, { word: 'Arrivederci', translation: 'Goodbye' },
-      { word: 'Grazie', translation: 'Thank you' }, { word: 'Acqua', translation: 'Water' },
-    ],
-    ja: [
-      { word: 'こんにちは', translation: 'Hello' }, { word: 'さようなら', translation: 'Goodbye' },
-      { word: 'ありがとう', translation: 'Thank you' }, { word: '水', translation: 'Water' },
-    ],
-    ko: [
-      { word: '안녕하세요', translation: 'Hello' }, { word: '감사합니다', translation: 'Thank you' },
-      { word: '물', translation: 'Water' }, { word: '집', translation: 'House' },
+      { word: 'ㅋㅋㅋ', meanings: { pt: 'Hahaha (risada)', en: 'Hahaha (laughter)', es: 'Jajaja', fr: 'Hahaha', de: 'Hahaha', it: 'Hahaha', ja: 'ハハハ', ko: '웃음' } },
+      { word: '대박', meanings: { pt: 'Incrível / Jackpot', en: 'Amazing / Jackpot', es: 'Increíble', fr: 'Incroyable', de: 'Wahnsinn', it: 'Pazzesco', ja: 'すごい', ko: '놀라운' } },
+      { word: '헐', meanings: { pt: 'Nossa! / Não acredito!', en: 'OMG / No way', es: '¡Dios mío!', fr: 'Oh là là !', de: 'Oh mein Gott!', it: 'Oh mio Dio!', ja: 'うそ！', ko: '세상에' } },
+      { word: '꿀잼', meanings: { pt: 'Muito divertido', en: 'Super fun', es: 'Súper divertido', fr: 'Trop amusant', de: 'Super lustig', it: 'Super divertente', ja: 'めっちゃ面白い', ko: '꿀잼' } },
     ],
     pt: [
-      { word: 'Olá', translation: 'Hello' }, { word: 'Obrigado', translation: 'Thank you' },
-      { word: 'Água', translation: 'Water' }, { word: 'Casa', translation: 'House' },
+      { word: 'Kkkk', meanings: { pt: 'Risada', en: 'Laughter', es: 'Risa', fr: 'Rire', de: 'Lachen', it: 'Risata', ja: '笑い', ko: '웃음' } },
+      { word: 'TMJ', meanings: { pt: 'Tamo junto', en: "We're together / Got your back", es: 'Estamos juntos', fr: 'On est ensemble', de: 'Wir halten zusammen', it: 'Siamo insieme', ja: '一緒だよ', ko: '함께야' } },
+      { word: 'Mds', meanings: { pt: 'Meu Deus', en: 'Oh my God', es: 'Dios mío', fr: 'Mon Dieu', de: 'Mein Gott', it: 'Mio Dio', ja: 'なんてこと', ko: '세상에' } },
+      { word: 'Plmdds', meanings: { pt: 'Pelo amor de Deus', en: 'For the love of God', es: 'Por el amor de Dios', fr: "Pour l'amour de Dieu", de: 'Um Gottes willen', it: "Per l'amor di Dio", ja: '頼むから', ko: '제발' } },
     ],
-    en: [],
-  },
-  it: {
-    en: [
-      { word: 'Hello', translation: 'Ciao', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'Arrivederci', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'Grazie', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: 'Acqua', pronunciation: '/ˈwɔːtər/' },
-      { word: 'Food', translation: 'Cibo', pronunciation: '/fuːd/' },
-      { word: 'House', translation: 'Casa', pronunciation: '/haʊs/' },
-      { word: 'Love', translation: 'Amore', pronunciation: '/lʌv/' },
-      { word: 'Friend', translation: 'Amico', pronunciation: '/frɛnd/' },
-      { word: 'Family', translation: 'Famiglia', pronunciation: '/ˈfæmɪli/' },
-      { word: 'Work', translation: 'Lavoro', pronunciation: '/wɜːrk/' },
-    ],
-    es: [
-      { word: 'Hola', translation: 'Ciao' }, { word: 'Adiós', translation: 'Arrivederci' },
-      { word: 'Gracias', translation: 'Grazie' }, { word: 'Agua', translation: 'Acqua' },
-    ],
-    fr: [
-      { word: 'Bonjour', translation: 'Buongiorno' }, { word: 'Merci', translation: 'Grazie' },
-      { word: 'Eau', translation: 'Acqua' }, { word: 'Maison', translation: 'Casa' },
-    ],
-    de: [
-      { word: 'Hallo', translation: 'Ciao' }, { word: 'Danke', translation: 'Grazie' },
-      { word: 'Wasser', translation: 'Acqua' }, { word: 'Haus', translation: 'Casa' },
-    ],
-    it: [],
-    ja: [
-      { word: 'こんにちは', translation: 'Ciao' }, { word: 'ありがとう', translation: 'Grazie' },
-      { word: '水', translation: 'Acqua' },
-    ],
-    ko: [
-      { word: '안녕하세요', translation: 'Ciao' }, { word: '감사합니다', translation: 'Grazie' },
-      { word: '물', translation: 'Acqua' },
-    ],
-    pt: [
-      { word: 'Olá', translation: 'Ciao' }, { word: 'Obrigado', translation: 'Grazie' },
-      { word: 'Água', translation: 'Acqua' }, { word: 'Casa', translation: 'Casa' },
-    ],
-  },
-  es: {
-    en: [
-      { word: 'Hello', translation: 'Hola', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'Adiós', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'Gracias', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: 'Agua', pronunciation: '/ˈwɔːtər/' },
-      { word: 'Food', translation: 'Comida', pronunciation: '/fuːd/' },
-      { word: 'House', translation: 'Casa', pronunciation: '/haʊs/' },
-      { word: 'Love', translation: 'Amor', pronunciation: '/lʌv/' },
-      { word: 'Friend', translation: 'Amigo', pronunciation: '/frɛnd/' },
-    ],
-    fr: [{ word: 'Bonjour', translation: 'Hola' }, { word: 'Merci', translation: 'Gracias' }, { word: 'Eau', translation: 'Agua' }, { word: 'Maison', translation: 'Casa' }],
-    de: [{ word: 'Hallo', translation: 'Hola' }, { word: 'Danke', translation: 'Gracias' }, { word: 'Wasser', translation: 'Agua' }, { word: 'Haus', translation: 'Casa' }],
-    it: [{ word: 'Ciao', translation: 'Hola' }, { word: 'Grazie', translation: 'Gracias' }, { word: 'Acqua', translation: 'Agua' }, { word: 'Casa', translation: 'Casa' }],
-    es: [],
-    ja: [{ word: 'こんにちは', translation: 'Hola' }, { word: 'ありがとう', translation: 'Gracias' }],
-    ko: [{ word: '안녕하세요', translation: 'Hola' }, { word: '감사합니다', translation: 'Gracias' }],
-    pt: [{ word: 'Olá', translation: 'Hola' }, { word: 'Obrigado', translation: 'Gracias' }, { word: 'Água', translation: 'Agua' }],
-  },
-  fr: {
-    en: [
-      { word: 'Hello', translation: 'Bonjour', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'Au revoir', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'Merci', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: 'Eau', pronunciation: '/ˈwɔːtər/' },
-      { word: 'House', translation: 'Maison', pronunciation: '/haʊs/' },
-    ],
-    es: [{ word: 'Hola', translation: 'Bonjour' }, { word: 'Gracias', translation: 'Merci' }],
-    fr: [],
-    de: [{ word: 'Hallo', translation: 'Bonjour' }, { word: 'Danke', translation: 'Merci' }],
-    it: [{ word: 'Ciao', translation: 'Bonjour' }, { word: 'Grazie', translation: 'Merci' }],
-    ja: [{ word: 'こんにちは', translation: 'Bonjour' }],
-    ko: [{ word: '안녕하세요', translation: 'Bonjour' }, { word: '감사합니다', translation: 'Merci' }],
-    pt: [{ word: 'Olá', translation: 'Bonjour' }, { word: 'Obrigado', translation: 'Merci' }],
-  },
-  de: {
-    en: [
-      { word: 'Hello', translation: 'Hallo', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'Tschüss', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'Danke', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: 'Wasser', pronunciation: '/ˈwɔːtər/' },
-      { word: 'House', translation: 'Haus', pronunciation: '/haʊs/' },
-    ],
-    es: [{ word: 'Hola', translation: 'Hallo' }, { word: 'Gracias', translation: 'Danke' }],
-    fr: [{ word: 'Bonjour', translation: 'Hallo' }, { word: 'Merci', translation: 'Danke' }],
-    de: [],
-    it: [{ word: 'Ciao', translation: 'Hallo' }, { word: 'Grazie', translation: 'Danke' }],
-    ja: [{ word: 'こんにちは', translation: 'Hallo' }],
-    ko: [{ word: '안녕하세요', translation: 'Hallo' }, { word: '감사합니다', translation: 'Danke' }],
-    pt: [{ word: 'Olá', translation: 'Hallo' }, { word: 'Obrigado', translation: 'Danke' }],
-  },
-  ja: {
-    en: [
-      { word: 'Hello', translation: 'こんにちは', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: 'さようなら', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: 'ありがとう', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: '水', pronunciation: '/ˈwɔːtər/' },
-    ],
-    es: [{ word: 'Hola', translation: 'こんにちは' }, { word: 'Gracias', translation: 'ありがとう' }],
-    fr: [{ word: 'Bonjour', translation: 'こんにちは' }, { word: 'Merci', translation: 'ありがとう' }],
-    de: [{ word: 'Hallo', translation: 'こんにちは' }, { word: 'Danke', translation: 'ありがとう' }],
-    it: [{ word: 'Ciao', translation: 'こんにちは' }, { word: 'Grazie', translation: 'ありがとう' }],
-    ja: [],
-    ko: [{ word: '안녕하세요', translation: 'こんにちは' }, { word: '감사합니다', translation: 'ありがとう' }],
-    pt: [{ word: 'Olá', translation: 'こんにちは' }, { word: 'Obrigado', translation: 'ありがとう' }],
-  },
-  ko: {
-    en: [
-      { word: 'Hello', translation: '안녕하세요', pronunciation: '/həˈloʊ/' },
-      { word: 'Goodbye', translation: '안녕히 가세요', pronunciation: '/ɡʊdˈbaɪ/' },
-      { word: 'Thank you', translation: '감사합니다', pronunciation: '/θæŋk juː/' },
-      { word: 'Water', translation: '물', pronunciation: '/ˈwɔːtər/' },
-    ],
-    es: [{ word: 'Hola', translation: '안녕하세요' }, { word: 'Gracias', translation: '감사합니다' }],
-    fr: [{ word: 'Bonjour', translation: '안녕하세요' }, { word: 'Merci', translation: '감사합니다' }],
-    de: [{ word: 'Hallo', translation: '안녕하세요' }, { word: 'Danke', translation: '감사합니다' }],
-    it: [{ word: 'Ciao', translation: '안녕하세요' }, { word: 'Grazie', translation: '감사합니다' }],
-    ja: [{ word: 'こんにちは', translation: '안녕하세요' }, { word: 'ありがとう', translation: '감사합니다' }],
-    ko: [],
-    pt: [{ word: 'Olá', translation: '안녕하세요' }, { word: 'Obrigado', translation: '감사합니다' }],
-  },
-};
+  };
 
-// Internet slang by target language
-const slangData: Record<string, { word: string; translation: string }[]> = {
-  en: [
-    { word: 'LOL', translation: 'Laughing Out Loud' },
-    { word: 'BRB', translation: 'Be Right Back' },
-    { word: 'GOAT', translation: 'Greatest Of All Time' },
-    { word: 'NGL', translation: 'Not Gonna Lie' },
-    { word: 'IYKYK', translation: 'If You Know You Know' },
-    { word: 'Slay', translation: 'To do something exceptionally well' },
-    { word: 'No cap', translation: 'No lie / For real' },
-    { word: 'Vibe check', translation: 'Assessing the mood' },
-  ],
-  es: [
-    { word: 'Jajaja', translation: 'Hahaha (riso)' },
-    { word: 'TQM', translation: 'Te Quiero Mucho' },
-    { word: 'Mola', translation: 'Cool / Legal' },
-    { word: 'Flipar', translation: 'To freak out' },
-  ],
-  fr: [
-    { word: 'MDR', translation: 'Mort De Rire (LOL)' },
-    { word: 'OKLM', translation: 'Au calme (chilling)' },
-    { word: 'Sah', translation: 'Seriously / For real' },
-    { word: 'Bail', translation: 'Thing / Stuff' },
-  ],
-  de: [
-    { word: 'Digga', translation: 'Dude / Bro' },
-    { word: 'Krass', translation: 'Crazy / Intense' },
-    { word: 'Alter', translation: 'Dude (exclamation)' },
-    { word: 'Chillen', translation: 'To chill' },
-  ],
-  it: [
-    { word: 'Boh', translation: 'I don\'t know' },
-    { word: 'Figo/a', translation: 'Cool / Hot' },
-    { word: 'Che figata', translation: 'How cool!' },
-    { word: 'Sgamare', translation: 'To get caught' },
-  ],
-  ja: [
-    { word: 'www', translation: 'LOL (from warau)' },
-    { word: 'ヤバい', translation: 'Crazy / Amazing' },
-    { word: 'マジ', translation: 'Seriously / For real' },
-    { word: 'ウケる', translation: 'Hilarious' },
-  ],
-  ko: [
-    { word: 'ㅋㅋㅋ', translation: 'Hahaha (riso)' },
-    { word: '대박', translation: 'Amazing / Jackpot' },
-    { word: '헐', translation: 'OMG / No way' },
-    { word: '꿀잼', translation: 'Super fun' },
-  ],
-  pt: [
-    { word: 'Kkkk', translation: 'Hahaha' },
-    { word: 'TMJ', translation: 'Tamo junto' },
-    { word: 'Mds', translation: 'Meu Deus' },
-    { word: 'Plmdds', translation: 'Pelo amor de Deus' },
-  ],
-};
+  const slang = slangByLang[course] || [];
+  return slang.map(s => ({
+    word: s.word,
+    translation: s.meanings[nativeLang] || s.meanings.en || '',
+    meaning: s.meanings[course] || s.meanings.en || '',
+  }));
+}
 
 const DictionaryTab = () => {
   const { course, nativeLang } = useApp();
   const tr = useTranslation(nativeLang);
   const [search, setSearch] = useState('');
   const [showSlang, setShowSlang] = useState(false);
-  const words = dictionaryData[nativeLang]?.[course] || dictionaryData.pt?.[course] || [];
-  const slang = slangData[course] || [];
+
+  const words = useMemo(() => buildDictionary(nativeLang, course), [nativeLang, course]);
+  const slang = useMemo(() => getSlangData(course, nativeLang), [course, nativeLang]);
 
   const filtered = words.filter(w =>
     w.word.toLowerCase().includes(search.toLowerCase()) ||
@@ -287,11 +124,22 @@ const DictionaryTab = () => {
     w.translation.toLowerCase().includes(search.toLowerCase())
   );
 
+  const speakWord = (text: string) => {
+    const langMap: Record<string, string> = {
+      en: 'en-US', es: 'es-ES', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', ja: 'ja-JP', pt: 'pt-BR', ko: 'ko-KR'
+    };
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langMap[course] || 'en-US';
+    utterance.rate = 0.8;
+    speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="space-y-5 pb-4">
       <div className="text-center mb-2">
         <span className="text-4xl">📖</span>
         <h2 className="text-2xl font-black text-foreground">{tr('dictionary_title')}</h2>
+        <p className="text-xs text-muted-foreground">{words.length} {tr('words') || 'palavras'}</p>
       </div>
 
       <div className="relative">
@@ -305,7 +153,6 @@ const DictionaryTab = () => {
         />
       </div>
 
-      {/* Toggle between regular and slang */}
       <div className="flex gap-2">
         <button
           onClick={() => setShowSlang(false)}
@@ -323,29 +170,41 @@ const DictionaryTab = () => {
 
       {!showSlang ? (
         <div className="space-y-2">
-          {filtered.map((w, i) => (
-            <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between slide-up" style={{ animationDelay: `${i * 30}ms` }}>
-              <div>
-                <p className="font-black text-foreground">{w.word}</p>
-                <p className="text-sm text-muted-foreground">{w.translation}</p>
+          {filtered.slice(0, 50).map((w, i) => (
+            <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between slide-up" style={{ animationDelay: `${i * 20}ms` }}>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-black text-foreground">{w.word}</p>
+                  <button onClick={() => speakWord(w.word)} className="text-muted-foreground hover:text-primary">
+                    <Volume2 size={14} />
+                  </button>
+                </div>
+                <p className="text-sm text-primary font-bold">{w.translation}</p>
+                {w.meaning && <p className="text-xs text-muted-foreground mt-0.5">{w.meaning}</p>}
               </div>
-              {w.pronunciation && (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-lg font-mono">{w.pronunciation}</span>
-              )}
             </div>
           ))}
           {filtered.length === 0 && (
             <p className="text-center text-muted-foreground py-8">{tr('no_words_found')}</p>
           )}
+          {filtered.length > 50 && (
+            <p className="text-center text-xs text-muted-foreground">+{filtered.length - 50} {tr('words') || 'palavras'}...</p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
           {filteredSlang.map((w, i) => (
-            <div key={i} className="bg-card rounded-xl p-4 border border-border flex items-center justify-between slide-up" style={{ animationDelay: `${i * 30}ms` }}>
-              <div>
+            <div key={i} className="bg-card rounded-xl p-4 border border-border slide-up" style={{ animationDelay: `${i * 30}ms` }}>
+              <div className="flex items-center gap-2 mb-1">
                 <p className="font-black text-foreground">🔥 {w.word}</p>
-                <p className="text-sm text-muted-foreground">{w.translation}</p>
+                <button onClick={() => speakWord(w.word)} className="text-muted-foreground hover:text-primary">
+                  <Volume2 size={14} />
+                </button>
               </div>
+              <p className="text-sm text-primary font-bold">{w.translation}</p>
+              {w.meaning !== w.translation && (
+                <p className="text-xs text-muted-foreground mt-0.5 italic">({w.meaning})</p>
+              )}
             </div>
           ))}
           {filteredSlang.length === 0 && (

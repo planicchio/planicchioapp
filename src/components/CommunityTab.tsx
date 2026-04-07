@@ -57,7 +57,7 @@ function timeAgo(dateStr: string, tr: (k: string) => string): string {
 }
 
 const CommunityTab = () => {
-  const { name, nativeLang, xp, streak } = useApp();
+  const { name, nativeLang, xp, streak, getPetEmoji } = useApp();
   const tr = useTranslation(nativeLang);
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -165,14 +165,29 @@ const CommunityTab = () => {
   useEffect(() => { loadRanking(); }, [loadRanking]);
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
-  // Upsert ranking for current user
+  // Upsert ranking for current user using user_name+week as conflict
   useEffect(() => {
     if (!name) return;
     const currentWeek = getCurrentWeek();
-    supabase.from('community_ranking').upsert(
-      { user_name: `${name} ⭐`, xp, streak, week: currentWeek },
-      { onConflict: 'id' }
-    ).then(() => loadRanking());
+    const upsertRanking = async () => {
+      // Check if entry exists
+      const { data: existing } = await supabase.from('community_ranking')
+        .select('id')
+        .eq('user_name', `${name} ⭐`)
+        .eq('week', currentWeek)
+        .maybeSingle();
+      
+      if (existing) {
+        await supabase.from('community_ranking')
+          .update({ xp, streak, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase.from('community_ranking')
+          .insert({ user_name: `${name} ⭐`, xp, streak, week: currentWeek });
+      }
+      loadRanking();
+    };
+    upsertRanking();
   }, [xp, streak, name]);
 
   // Realtime subscription
@@ -186,8 +201,9 @@ const CommunityTab = () => {
 
   const handleSend = async () => {
     if (!newComment.trim()) return;
+    const petEmoji = getPetEmoji();
     await supabase.from('community_posts').insert({
-      user_name: `${name} 🌍`, text: newComment, user_id: userId,
+      user_name: `${name} ${petEmoji}`, text: newComment, user_id: userId,
     });
     setNewComment('');
     loadPosts();
@@ -195,8 +211,9 @@ const CommunityTab = () => {
 
   const handleReply = async (postId: string) => {
     if (!replyText.trim()) return;
+    const petEmoji = getPetEmoji();
     await supabase.from('community_replies').insert({
-      post_id: postId, user_name: `${name} 🌍`, text: replyText, user_id: userId,
+      post_id: postId, user_name: `${name} ${petEmoji}`, text: replyText, user_id: userId,
     });
     setReplyText('');
     setReplyingTo(null);
@@ -230,8 +247,9 @@ const CommunityTab = () => {
   };
 
   const handleRepost = async (post: Post) => {
+    const petEmoji = getPetEmoji();
     await supabase.from('community_posts').insert({
-      user_name: `${name} 🌍`, text: `🔁 ${post.user_name}: "${post.text}"`,
+      user_name: `${name} ${petEmoji}`, text: `🔁 ${post.user_name}: "${post.text}"`,
       user_id: userId, repost_of: post.id,
     });
     loadPosts();

@@ -217,9 +217,14 @@ const DictionaryTab = () => {
         <Lock className="mx-auto text-primary/50 mb-2" size={32} />
         <h3 className="font-black text-foreground">{tr('flashcards')}</h3>
         <p className="text-sm text-muted-foreground mb-3">{tr('flashcards_desc')}</p>
-        <button className="bg-primary/10 text-primary font-bold px-6 py-2 rounded-full text-sm">
+        <a
+          href="https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block bg-primary/10 text-primary font-bold px-6 py-2 rounded-full text-sm hover:bg-primary/20 transition-colors"
+        >
           {tr('unlock_vip')}
-        </button>
+        </a>
       </div>
     </div>
   );

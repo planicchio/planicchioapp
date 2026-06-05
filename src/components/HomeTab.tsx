@@ -7,6 +7,8 @@ import QuickQuizGame from './QuickQuizGame';
 import WordHuntGame from './WordHuntGame';
 import ListenGame from './ListenGame';
 import { generateExercises } from '@/data/wordBank';
+import { weekSeed } from '@/lib/weekly';
+import WeeklyCountdown from './WeeklyCountdown';
 
 const HomeTab = () => {
   const { name, streak, xp, level, course, nativeLang, getTitle, dailyMissions, weeklyMissions, setActiveTab } = useApp();

@@ -339,6 +339,16 @@ const CommunityTab = () => {
 
       {activeSection === 'profile' ? (
         <div className="space-y-4">
+          {saveMsg && (
+            <div className="bg-primary/10 border border-primary/30 text-foreground rounded-xl px-3 py-2 text-sm text-center font-bold">
+              {saveMsg}
+            </div>
+          )}
+          {!userId && (
+            <div className="bg-yellow-500/10 border border-yellow-500/40 text-foreground rounded-xl px-3 py-2 text-xs text-center">
+              ⚠️ Faça login para sincronizar perfil, posts, curtidas e ranking entre dispositivos.
+            </div>
+          )}
           <div className="bg-card rounded-2xl p-5 border border-border text-center">
             <span className="text-6xl block mb-2">{profile.avatar_emoji}</span>
             <h3 className="text-xl font-black text-foreground">{profile.user_name}</h3>

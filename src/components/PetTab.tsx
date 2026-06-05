@@ -39,7 +39,7 @@ const sleepingTexts: Record<string, string> = {
   ja: 'Zzz... 寝ています...', ko: 'Zzz... 자고 있어요...',
 };
 
-const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
+const VIP_URL = 'https://buy.stripe.com/5kQaEYf7KdSBeHq3DYaMU02';
 
 const PetTab = () => {
   const {

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, Volume2, Eye, Mic, PenLine } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { weeklyShuffle, weekSeed } from '@/lib/weekly';
+import WeeklyCountdown from './WeeklyCountdown';
 
 interface Exercise {
   question: string;
@@ -950,7 +952,13 @@ const ExercisesTab = () => {
   }, [selectedCat, nativeLang, course, level]);
 
   // Shuffle exercises once when category is selected
-  const exercises = useMemo(() => rawExercises.map(ex => shuffleExercise(ex)), [rawExercises]);
+  // Weekly rotation: every Sunday 00:00 the order changes deterministically, so
+  // users see "new" exercises automatically without any manual update.
+  const exercises = useMemo(() => {
+    const seedOffset = (selectedCat || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const rotated = weeklyShuffle(rawExercises, seedOffset);
+    return rotated.map(ex => shuffleExercise(ex));
+  }, [rawExercises, selectedCat]);
   const current = exercises[currentIdx];
 
   const langMap: Record<string, string> = {
@@ -1090,6 +1098,10 @@ const ExercisesTab = () => {
           <h2 className="text-2xl font-black text-foreground">{tr('exercises_title')}</h2>
           <p className="text-sm text-muted-foreground">{tr('level')} {level} · {tr('choose_category')}</p>
         </div>
+        <WeeklyCountdown label="🔄 Exercícios novos em" />
+        <p className="text-[11px] text-center text-muted-foreground -mt-1">
+          Semana #{weekSeed()} · atualiza todo domingo automaticamente 🌅
+        </p>
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat, i) => (
             <motion.button

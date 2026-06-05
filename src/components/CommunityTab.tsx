@@ -5,7 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 
-const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
+const VIP_URL = 'https://buy.stripe.com/5kQaEYf7KdSBeHq3DYaMU02';
 
 const countryFlags: Record<string, string> = {
   'Brasil': '🇧🇷', 'USA': '🇺🇸', 'España': '🇪🇸', 'France': '🇫🇷',
@@ -71,20 +71,31 @@ const CommunityTab = () => {
   const [ranking, setRanking] = useState<{ name: string; xp: number; streak: number }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Profile editing
-  const [profile, setProfile] = useState<UserProfile>({
-    user_name: name, bio: '', country: '', interests: [], avatar_emoji: '🌍'
-  });
+  // Profile editing — saves locally even when not logged in
+  const PROFILE_LS_KEY = 'planicchio_community_profile';
+  const loadLocalProfile = (): UserProfile => {
+    try {
+      const raw = localStorage.getItem(PROFILE_LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { user_name: name, bio: '', country: '', interests: [], avatar_emoji: '🌍' };
+  };
+  const [profile, setProfile] = useState<UserProfile>(loadLocalProfile);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState<UserProfile>(profile);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   const interestOptions = ['📚 Languages', '🎮 Games', '🎵 Music', '🎬 Movies', '✈️ Travel', '🍕 Food', '⚽ Sports', '💻 Tech', '🎨 Art', '📷 Photography'];
 
-  // Get user session
+  // Get user session + listen for changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user?.id || null);
     });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+      setUserId(s?.user?.id || null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Load posts from Supabase
@@ -267,12 +278,21 @@ const CommunityTab = () => {
   };
 
   const saveProfile = async () => {
-    if (!userId) return;
-    await supabase.from('user_profiles').upsert({
-      user_id: userId, ...profileForm,
-    }, { onConflict: 'user_id' });
+    // Always save locally so changes persist even without login
+    localStorage.setItem(PROFILE_LS_KEY, JSON.stringify(profileForm));
     setProfile(profileForm);
     setEditingProfile(false);
+
+    if (!userId) {
+      setSaveMsg('💾 Salvo localmente. Faça login para sincronizar com a comunidade.');
+      setTimeout(() => setSaveMsg(null), 4000);
+      return;
+    }
+    const { error } = await supabase.from('user_profiles').upsert({
+      user_id: userId, ...profileForm,
+    }, { onConflict: 'user_id' });
+    setSaveMsg(error ? `❌ ${error.message}` : '✅ Perfil salvo!');
+    setTimeout(() => setSaveMsg(null), 3000);
   };
 
   const toggleReplies = (id: string) => {
@@ -319,6 +339,16 @@ const CommunityTab = () => {
 
       {activeSection === 'profile' ? (
         <div className="space-y-4">
+          {saveMsg && (
+            <div className="bg-primary/10 border border-primary/30 text-foreground rounded-xl px-3 py-2 text-sm text-center font-bold">
+              {saveMsg}
+            </div>
+          )}
+          {!userId && (
+            <div className="bg-yellow-500/10 border border-yellow-500/40 text-foreground rounded-xl px-3 py-2 text-xs text-center">
+              ⚠️ Faça login para sincronizar perfil, posts, curtidas e ranking entre dispositivos.
+            </div>
+          )}
           <div className="bg-card rounded-2xl p-5 border border-border text-center">
             <span className="text-6xl block mb-2">{profile.avatar_emoji}</span>
             <h3 className="text-xl font-black text-foreground">{profile.user_name}</h3>

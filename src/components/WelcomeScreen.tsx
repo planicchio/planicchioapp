@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 
-const VIP_STRIPE_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
+const VIP_STRIPE_URL = 'https://buy.stripe.com/5kQaEYf7KdSBeHq3DYaMU02';
 
 const WelcomeScreen = () => {
   const { setStage, nativeLang } = useApp();

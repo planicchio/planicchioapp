@@ -131,6 +131,9 @@ const HomeTab = () => {
             {tr('start') || 'Ir'} →
           </button>
         </div>
+        <div className="mt-3">
+          <WeeklyCountdown label="🔄 Novo desafio em" />
+        </div>
       </div>
 
       {/* Minigames */}

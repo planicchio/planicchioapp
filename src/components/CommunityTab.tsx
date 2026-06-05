@@ -278,12 +278,21 @@ const CommunityTab = () => {
   };
 
   const saveProfile = async () => {
-    if (!userId) return;
-    await supabase.from('user_profiles').upsert({
-      user_id: userId, ...profileForm,
-    }, { onConflict: 'user_id' });
+    // Always save locally so changes persist even without login
+    localStorage.setItem(PROFILE_LS_KEY, JSON.stringify(profileForm));
     setProfile(profileForm);
     setEditingProfile(false);
+
+    if (!userId) {
+      setSaveMsg('💾 Salvo localmente. Faça login para sincronizar com a comunidade.');
+      setTimeout(() => setSaveMsg(null), 4000);
+      return;
+    }
+    const { error } = await supabase.from('user_profiles').upsert({
+      user_id: userId, ...profileForm,
+    }, { onConflict: 'user_id' });
+    setSaveMsg(error ? `❌ ${error.message}` : '✅ Perfil salvo!');
+    setTimeout(() => setSaveMsg(null), 3000);
   };
 
   const toggleReplies = (id: string) => {

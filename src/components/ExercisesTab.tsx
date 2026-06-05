@@ -1098,6 +1098,10 @@ const ExercisesTab = () => {
           <h2 className="text-2xl font-black text-foreground">{tr('exercises_title')}</h2>
           <p className="text-sm text-muted-foreground">{tr('level')} {level} · {tr('choose_category')}</p>
         </div>
+        <WeeklyCountdown label="🔄 Exercícios novos em" />
+        <p className="text-[11px] text-center text-muted-foreground -mt-1">
+          Semana #{weekSeed()} · atualiza todo domingo automaticamente 🌅
+        </p>
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat, i) => (
             <motion.button

@@ -5,7 +5,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 
-const VIP_URL = 'https://buy.stripe.com/9B614o1gU3dXeHq7UeaMU01';
+const VIP_URL = 'https://buy.stripe.com/5kQaEYf7KdSBeHq3DYaMU02';
 
 const countryFlags: Record<string, string> = {
   'Brasil': '🇧🇷', 'USA': '🇺🇸', 'España': '🇪🇸', 'France': '🇫🇷',

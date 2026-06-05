@@ -17,11 +17,10 @@ const HomeTab = () => {
   const courseName = COURSES.find(c => c.id === course)?.name || 'Idioma';
   const [activeMinigame, setActiveMinigame] = useState<string | null>(null);
 
-  // Weekly challenge: pick a random category based on week number
+  // Weekly challenge: rotates automatically every Sunday at 00:00
   const weeklyChallenge = useMemo(() => {
     const cats = ['greetings', 'food', 'travel', 'work', 'daily', 'numbers', 'animals', 'colors'];
-    const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
-    const cat = cats[weekNum % cats.length];
+    const cat = cats[weekSeed() % cats.length];
     const catEmojis: Record<string, string> = { greetings: '👋', food: '🍕', travel: '✈️', work: '💼', daily: '🏠', numbers: '🔢', animals: '🐾', colors: '🎨' };
     const catKeys: Record<string, string> = { greetings: 'cat_greetings', food: 'cat_food', travel: 'cat_travel', work: 'cat_work', daily: 'cat_daily', numbers: 'cat_numbers', animals: 'cat_animals', colors: 'cat_colors' };
     return { category: cat, emoji: catEmojis[cat] || '📚', nameKey: catKeys[cat] || cat };

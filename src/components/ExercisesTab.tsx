@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, Volume2, Eye, Mic, PenLine } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useTranslation } from '@/i18n/translations';
+import { weeklyShuffle, weekSeed } from '@/lib/weekly';
+import WeeklyCountdown from './WeeklyCountdown';
 
 interface Exercise {
   question: string;

@@ -952,7 +952,13 @@ const ExercisesTab = () => {
   }, [selectedCat, nativeLang, course, level]);
 
   // Shuffle exercises once when category is selected
-  const exercises = useMemo(() => rawExercises.map(ex => shuffleExercise(ex)), [rawExercises]);
+  // Weekly rotation: every Sunday 00:00 the order changes deterministically, so
+  // users see "new" exercises automatically without any manual update.
+  const exercises = useMemo(() => {
+    const seedOffset = (selectedCat || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const rotated = weeklyShuffle(rawExercises, seedOffset);
+    return rotated.map(ex => shuffleExercise(ex));
+  }, [rawExercises, selectedCat]);
   const current = exercises[currentIdx];
 
   const langMap: Record<string, string> = {

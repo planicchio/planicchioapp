@@ -71,20 +71,31 @@ const CommunityTab = () => {
   const [ranking, setRanking] = useState<{ name: string; xp: number; streak: number }[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Profile editing
-  const [profile, setProfile] = useState<UserProfile>({
-    user_name: name, bio: '', country: '', interests: [], avatar_emoji: '🌍'
-  });
+  // Profile editing — saves locally even when not logged in
+  const PROFILE_LS_KEY = 'planicchio_community_profile';
+  const loadLocalProfile = (): UserProfile => {
+    try {
+      const raw = localStorage.getItem(PROFILE_LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { user_name: name, bio: '', country: '', interests: [], avatar_emoji: '🌍' };
+  };
+  const [profile, setProfile] = useState<UserProfile>(loadLocalProfile);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState<UserProfile>(profile);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   const interestOptions = ['📚 Languages', '🎮 Games', '🎵 Music', '🎬 Movies', '✈️ Travel', '🍕 Food', '⚽ Sports', '💻 Tech', '🎨 Art', '📷 Photography'];
 
-  // Get user session
+  // Get user session + listen for changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user?.id || null);
     });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+      setUserId(s?.user?.id || null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Load posts from Supabase

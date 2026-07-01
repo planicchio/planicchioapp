@@ -218,7 +218,7 @@ const DictionaryTab = () => {
         <h3 className="font-black text-foreground">{tr('flashcards')}</h3>
         <p className="text-sm text-muted-foreground mb-3">{tr('flashcards_desc')}</p>
         <a
-          href="https://buy.stripe.com/5kQaEYf7KdSBeHq3DYaMU02"
+          href="https://buy.stripe.com/7sY3cw4t68yh8j2eiCaMU03"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-primary/10 text-primary font-bold px-6 py-2 rounded-full text-sm hover:bg-primary/20 transition-colors"

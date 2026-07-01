@@ -374,6 +374,18 @@ const ProfileSheet = ({ open, onClose }: Props) => {
                 </button>
               </div>
             )}
+
+            {/* Support */}
+            <a
+              href="mailto:planicchio@gmail.com?subject=Planicchio%20Support"
+              className="w-full bg-card rounded-xl p-4 border border-border flex items-center justify-between hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Heart size={18} className="text-primary" />
+                <span className="font-bold text-foreground">{tr('support') || 'Suporte'}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">planicchio@gmail.com</span>
+            </a>
           </div>
         </div>
       </div>
